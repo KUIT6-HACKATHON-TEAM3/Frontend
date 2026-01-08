@@ -21,22 +21,29 @@ export default function Login() {
 
         try{
             // [API]
-            // const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, {
-            //   email,
-            //   password
-            // });
-            // const token = res.data.accessToken;
-            
-            // [Mocking]
-            await new Promise((r) => setTimeout(r, 500));
-            const fakeToken = "mock_access_token_12345";
+            // 로그인 요청
+            const response = await axios.post("http://localhost:8080/api/auth/login", {
+                email: email,       
+                password: password  
+            });
 
-            localStorage.setItem("accessToken", fakeToken);
+            console.log("로그인 응답:", response.data);
 
-            alert("로그인 성공. 지도로 이동");
-            navigate("/", {replace: true}); // 뒤로가기 방지
-        } catch (error){
-            console.error(error);
+            const { accessToken, nickname } = response.data.data;
+
+            if (accessToken) {
+                localStorage.setItem("accessToken", accessToken);
+                localStorage.setItem("nickname", nickname);
+                
+                alert(`${nickname}님 환영합니다!`);
+
+                navigate("/", {replace: true});
+            } else{
+                alert("로그인은 됐는데 토큰이 없음. 백엔드 확인 요청");
+            }
+
+        } catch (error: any){
+            console.error("로그인 실패:", error);
             alert("아이디 또는 비밀번호가 일치하지 않습니다.");
         } finally{
             setIsLoading(false);
