@@ -1,35 +1,56 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import MapPage from "./pages/MapPage";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+function MapPage() {
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    window.location.reload();
+  };
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
+      <h1 className="text-2xl font-bold mb-4">지도 화면 (로그인 상태)</h1>
+      <p className="mb-8">자동 로그인이 잘 작동 중입니다.</p>
+      
+      {/* 이 버튼을 누르면 다시 로그인 화면으로 갑니다 */}
+      <button 
+        onClick={handleLogout}
+        className="bg-red-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-600"
+      >
+        로그아웃 (토큰 삭제)
+      </button>
+    </div>
   )
 }
 
-export default App
+function PrivateRoute({ children }: { children: JSX.Element }) {
+  // 로컬 스토리지에 토큰이 있는지 확인
+  const token = localStorage.getItem("accessToken");
+  
+  // 토큰 있으면 통과(children), 없으면 로그인 페이지로 이동
+  return token ? children : <Navigate to="/login" replace />;
+}
+
+function App() {
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />}/>
+        <Route path="/signup" element={<Signup />}/>
+
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <MapPage />
+            </PrivateRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
