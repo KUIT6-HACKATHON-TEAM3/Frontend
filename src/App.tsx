@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import MapPage from "./pages/MapPage";
+// import MapPage from "./pages/MapPage";
 
 function MapPage() {
   const handleLogout = () => {
