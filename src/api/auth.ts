@@ -24,7 +24,9 @@ export type VerifyEmailCodeReq = { email: string; code: string };
 
 export const authApi = {
   async signup(body: SignupReq) {
-    const { data } = await http.post("/api/auth/signup", body);
+    const { data } = await http.post("/api/auth/signup", body, {
+      withCredentials: false
+    });
     return data;
   },
 
