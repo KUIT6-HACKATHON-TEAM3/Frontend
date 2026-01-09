@@ -55,17 +55,12 @@ export default function MapPage({
   const divRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
-  
-  // ★ 클릭 충돌 방지용 시간 기록
-  const lastPolylineClickTime = useRef<number>(0);
 
-  // 최신 상태 참조용 Ref
-  const stateRef = useRef({ selectedRoad: null as string | null, isSearchVisible: true });
-
-  const [isSearchVisible, setIsSearchVisible] = useState(true);
+  const destinationPinRef = useRef<any>(null);  // 클릭한 위치의 마커
   const [isMapReady, setIsMapReady] = useState(false);
   const [selectedRoad, setSelectedRoad] = useState<string | null>(null);
   const [mapLevel, setMapLevel] = useState(level);
+  const [clickedPinLocation, setClickedPinLocation] = useState<LatLng | null>(null);
 
   useEffect(() => {
     stateRef.current = { selectedRoad, isSearchVisible };
@@ -108,8 +103,16 @@ export default function MapPage({
       const map = new kakao.maps.Map(divRef.current, options);
       mapRef.current = map;
 
+      // 마커 이미지 생성
+        const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_b.png';
+        const imageSize = new kakao.maps.Size(36, 42);
+        const imageOption = { offset: new kakao.maps.Point(15, 30) };
+        const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
+
+      // 현재 위치에 마커 찍기
       const marker = new kakao.maps.Marker({
         position: new kakao.maps.LatLng(center.lat, center.lng),
+        image: markerImage
       });
       marker.setMap(map);
 
@@ -117,9 +120,35 @@ export default function MapPage({
         setMapLevel(map.getLevel());
       });
 
-      // 지도 클릭 이벤트 연결
-      kakao.maps.event.addListener(map, 'click', handleMapClick);
+      kakao.maps.event.addListener(map, 'click', (mouseEvent: any) => {
+        // 기존 마커가 있으면 제거
+        if (destinationPinRef.current) {
+          destinationPinRef.current.setMap(null);
+        }
 
+        const pinLocation = mouseEvent.latLng;
+        const newLocation = {
+          lat: pinLocation.getLat(),
+          lng: pinLocation.getLng(),
+        };
+
+        setClickedPinLocation(newLocation);
+
+        // 마커 이미지 생성
+        const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_b.png';
+        const imageSize = new kakao.maps.Size(36, 42);
+        const imageOption = { offset: new kakao.maps.Point(15, 30) };
+        const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
+
+        // 새 마커 생성 및 표시
+        destinationPinRef.current = new kakao.maps.Marker({
+          position: new kakao.maps.LatLng(newLocation.lat, newLocation.lng),
+          image: markerImage
+        });
+        destinationPinRef.current.setMap(map);
+      })
+
+      // 지도 준비 완료
       setIsMapReady(true);
     };
 

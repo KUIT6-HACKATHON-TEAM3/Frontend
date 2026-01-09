@@ -25,7 +25,7 @@ export default function RoadPolyline({
 }: Props) {
   // 지도 레벨에 따른 strokeWeight 계산
   // 레벨이 낮을수록(확대) 더 두껍게, 레벨이 높을수록(축소) 더 얇게
-  const calculatedStrokeWeight = Math.max(1, strokeWeight - mapLevel + 3);
+  const calculatedStrokeWeight = Math.max(0, strokeWeight - mapLevel + 3);
   const polylineRef = useRef<any>(null);
   const onRoadSelectRef = useRef(onRoadSelect);
 
