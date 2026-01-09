@@ -3,6 +3,7 @@ import type { LatLng } from "../data/all_roads_walking_paths";
 import RoadPolyline from "../components/map/RoadPolyline";
 import RoadInfoCard from "../components/map/RoadInfoCard";
 import { motion, AnimatePresence } from "framer-motion";
+import type { Variants } from "framer-motion";
 
 declare global {
   interface Window {
@@ -10,8 +11,8 @@ declare global {
   }
 }
 
-// 애니메이션 설정 (타입 제거하여 오류 방지)
-const topBarVariants = {
+// 애니메이션 설정
+const topBarVariants: Variants = {
   hidden: { y: -100, opacity: 0 },
   visible: { 
     y: 0, 
@@ -25,7 +26,7 @@ const topBarVariants = {
   }
 };
 
-const bottomCardVariants = {
+const bottomCardVariants: Variants = {
   hidden: { y: "100%", opacity: 0 },
   visible: { 
     y: 0, 
@@ -46,6 +47,13 @@ type Props = {
   pointsByRoad: Map<string, LatLng[]>;
 };
 
+// 카드에 표시할 데이터 타입 정의
+interface CardData {
+  type: 'ROAD' | 'DESTINATION';
+  title: string;       // 예: "능동로 가로수길" 또는 "📍 선택한 위치"
+  description: string; // 예: "1구간" 또는 "서울 광진구 ..."
+}
+
 export default function MapPage({
   appKey,
   center = { lat: 37.5408, lng: 127.0793 },
@@ -55,45 +63,80 @@ export default function MapPage({
   const divRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const destinationPinRef = useRef<any>(null); // 목적지 마커 Ref
 
-  // ★ 클릭 충돌 방지용 시간 기록
+  // 충돌 방지용 시간 기록
   const lastPolylineClickTime = useRef<number>(0);
 
   const [isSearchVisible, setIsSearchVisible] = useState(true);
-  const destinationPinRef = useRef<any>(null);  // 클릭한 위치의 마커
   const [isMapReady, setIsMapReady] = useState(false);
-  const [selectedRoad, setSelectedRoad] = useState<string | null>(null);
   const [mapLevel, setMapLevel] = useState(level);
-  const [clickedPinLocation, setClickedPinLocation] = useState<LatLng | null>(null);
 
-  const stateRef = useRef({ selectedRoad: null as string | null, isSearchVisible: true });
-  useEffect(() => {
-    stateRef.current = { selectedRoad, isSearchVisible };
-  }, [selectedRoad, isSearchVisible]);
+  // ★ 변경점: 단순히 로드 이름만 저장하는 게 아니라, 카드에 띄울 전체 데이터를 관리
+  const [cardData, setCardData] = useState<CardData | null>(null);
 
   // 1. 선(Polyline) 클릭 핸들러
   const handleRoadSelect = useCallback((roadName: string) => {
-    // 클릭 시간 기록
     lastPolylineClickTime.current = Date.now();
     
-    setSelectedRoad(roadName);
+    // 선을 누르면 마커는 지워주는 센스 (선택 사항)
+    if (destinationPinRef.current) {
+      destinationPinRef.current.setMap(null);
+      destinationPinRef.current = null;
+    }
+
+    setCardData({
+      title: "능동로 가로수길", // 대제목
+      description: roadName    // 소제목 (구간 이름)
+    });
     setIsSearchVisible(true); 
   }, []);
 
-  // 2. 지도 빈 곳 클릭 핸들러
-  const handleMapClick = useCallback(() => {
-    // 0.5초 이내에 선을 클릭했다면 지도 클릭은 무시
+  // 2. 지도 빈 곳 클릭 핸들러 (마커 생성 + 주소 변환 + 카드 열기)
+  const handleMapClick = useCallback((mouseEvent: any) => {
+    // 선 클릭 직후(0.5초 이내)라면 지도 클릭 무시 (이벤트 버블링 방지)
     const timeDiff = Date.now() - lastPolylineClickTime.current;
     if (timeDiff < 500) return;
 
-    const { selectedRoad, isSearchVisible } = stateRef.current;
+    // 카카오 맵 객체나 mouseEvent가 없으면 리턴
+    if (!mapRef.current || !mouseEvent || !window.kakao) return;
 
-    if (selectedRoad) {
-      setSelectedRoad(null); // 카드 닫기
-      setIsSearchVisible(false);
-    } else {
-      setIsSearchVisible(!isSearchVisible); // 검색창 토글
+    const kakao = window.kakao;
+    const latLng = mouseEvent.latLng;
+
+    // 2-1. 마커 찍기
+    if (destinationPinRef.current) {
+      destinationPinRef.current.setMap(null);
     }
+
+    const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_b.png';
+    const imageSize = new kakao.maps.Size(36, 42);
+    const imageOption = { offset: new kakao.maps.Point(15, 30) };
+    const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
+
+    const marker = new kakao.maps.Marker({
+      position: latLng,
+      image: markerImage
+    });
+    
+    marker.setMap(mapRef.current);
+    destinationPinRef.current = marker;
+
+    // 2-2. 주소 변환 (Geocoding)
+    const geocoder = new kakao.maps.services.Geocoder();
+    geocoder.coord2Address(latLng.getLng(), latLng.getLat(), (result: any, status: any) => {
+      if (status === kakao.maps.services.Status.OK) {
+        const address = result[0].address?.address_name || result[0].road_address?.address_name || "주소 정보 없음";
+        
+        // 2-3. 카드 데이터 업데이트 (카드 열기)
+        setCardData({
+          title: "📍 목적지 설정",
+          description: address
+        });
+        setIsSearchVisible(true);
+      }
+    });
+
   }, []);
 
   useEffect(() => {
@@ -101,6 +144,11 @@ export default function MapPage({
 
     const initMap = () => {
       const kakao = window.kakao;
+      if (!kakao.maps.services) {
+        console.error("Kakao Maps Services 라이브러리가 로드되지 않았습니다. 새로고침 해주세요.");
+        return;
+      }
+      
       const options = {
         center: new kakao.maps.LatLng(center.lat, center.lng),
         level,
@@ -108,13 +156,12 @@ export default function MapPage({
       const map = new kakao.maps.Map(divRef.current, options);
       mapRef.current = map;
 
-      // 마커 이미지 생성
-        const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_b.png';
-        const imageSize = new kakao.maps.Size(36, 42);
-        const imageOption = { offset: new kakao.maps.Point(15, 30) };
-        const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
+      // 초기 마커 (빨간색)
+      const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_b.png';
+      const imageSize = new kakao.maps.Size(36, 42);
+      const imageOption = { offset: new kakao.maps.Point(15, 30) };
+      const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
 
-      // 현재 위치에 마커 찍기
       const marker = new kakao.maps.Marker({
         position: new kakao.maps.LatLng(center.lat, center.lng),
         image: markerImage
@@ -125,62 +172,38 @@ export default function MapPage({
         setMapLevel(map.getLevel());
       });
 
+      // 지도 클릭 이벤트 연결 (인자 전달 방식 수정)
       kakao.maps.event.addListener(map, 'click', handleMapClick);
-      kakao.maps.event.addListener(map, 'click', (mouseEvent: any) => {
-        // 기존 마커가 있으면 제거
-        if (destinationPinRef.current) {
-          destinationPinRef.current.setMap(null);
-        }
 
-        const pinLocation = mouseEvent.latLng;
-        const newLocation = {
-          lat: pinLocation.getLat(),
-          lng: pinLocation.getLng(),
-        };
-
-        setClickedPinLocation(newLocation);
-
-        // 마커 이미지 생성
-        const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_b.png';
-        const imageSize = new kakao.maps.Size(36, 42);
-        const imageOption = { offset: new kakao.maps.Point(15, 30) };
-        const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
-
-        // 새 마커 생성 및 표시
-        destinationPinRef.current = new kakao.maps.Marker({
-          position: new kakao.maps.LatLng(newLocation.lat, newLocation.lng),
-          image: markerImage
-        });
-        destinationPinRef.current.setMap(map);
-      })
-
-      // 지도 준비 완료
       setIsMapReady(true);
     };
 
+    // ★ 중요: services 라이브러리 추가 (&libraries=services)
+    const scriptSrc = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&libraries=services&autoload=false`;
+
     const existingScript = document.querySelector(
-      'script[src^="//dapi.kakao.com/v2/maps/sdk.js"]'
+      `script[src*="libraries=services"]` 
     ) as HTMLScriptElement | null;
 
-    if (window.kakao?.maps) {
+    if (window.kakao?.maps && window.kakao.maps.services) {
       initMap();
       return;
     }
+    // 기존 services 없는 스크립트 제거(충돌방지)
+    const oldScript = document.querySelector(`script[src^="//dapi.kakao.com/v2/maps/sdk.js"]:not([src*="libraries=services"])`);
+    if (oldScript) {
+      oldScript.remove();
+    }
 
-    const script =
-      existingScript ??
-      (() => {
-        const s = document.createElement("script");
-        s.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false`;
-        s.async = true;
-        document.head.appendChild(s);
-        return s;
-      })();
+    const script = existingScript ?? (() => {
+      const s = document.createElement("script");
+      s.src = scriptSrc;
+      s.async = true;
+      document.head.appendChild(s);
+      return s;
+    })();
 
-    const onLoad = () => {
-      window.kakao.maps.load(initMap);
-    };
-
+    const onLoad = () => { window.kakao.maps.load(initMap); };
     script.addEventListener("load", onLoad);
     return () => { script.removeEventListener("load", onLoad); };
   }, [appKey, center.lat, center.lng, level, handleMapClick]);
@@ -217,8 +240,12 @@ export default function MapPage({
                 <button 
                 onClick={(e) => {
                     e.stopPropagation();
-                    if(selectedRoad) handleMapClick(); 
-                    else handleRoadSelect("능동로 가로수길 1구간");
+                    // 테스트용 가짜 데이터 주입
+                    if(cardData) {
+                        setCardData(null); 
+                    } else {
+                        handleRoadSelect("능동로 가로수길 1구간");
+                    }
                 }}
                 className="px-6 py-3 mt-4 bg-white text-[#B4B998] font-bold rounded-xl shadow-md border border-[#B4B998]"
                 >
@@ -243,7 +270,7 @@ export default function MapPage({
 
       {/* 하단 카드 */}
       <AnimatePresence>
-        {selectedRoad && (
+        {cardData && (
             <motion.div 
                 key="bottom-card"
                 ref={cardRef} 
@@ -254,8 +281,8 @@ export default function MapPage({
                 exit="exit"
             >
             <RoadInfoCard
-                roadName="능동로 가로수길" 
-                sectionName={selectedRoad}
+                roadName={cardData.title}       // 대제목 (가로수길 이름 or 목적지 설정)
+                sectionName={cardData.description} // 소제목 (구간 이름 or 주소)
                 isFavorite={false}
             />
             </motion.div>
