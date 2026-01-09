@@ -1,5 +1,4 @@
 import profile from '@/assets/icons/profile.svg';
-import edit from '@/assets/icons/edit.svg';
 import arrowRight from '@/assets/icons/arrow-right.svg';
 
 interface ListElementProp {
