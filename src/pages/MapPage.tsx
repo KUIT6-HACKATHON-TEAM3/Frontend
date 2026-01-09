@@ -4,6 +4,9 @@ import RoadPolyline from "../components/map/RoadPolyline";
 import RoadInfoCard from "../components/map/RoadInfoCard";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Variants } from "framer-motion";
+import curlogImg from "../assets/icons/current-location.svg"
+import destImg from "../assets/icons/destination.svg"
+
 
 declare global {
   interface Window {
@@ -86,6 +89,7 @@ export default function MapPage({
     }
 
     setCardData({
+      type: 'ROAD',
       title: "능동로 가로수길", // 대제목
       description: roadName    // 소제목 (구간 이름)
     });
@@ -109,7 +113,7 @@ export default function MapPage({
       destinationPinRef.current.setMap(null);
     }
 
-    const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_b.png';
+    const imageSrc = {curlogImg};
     const imageSize = new kakao.maps.Size(36, 42);
     const imageOption = { offset: new kakao.maps.Point(15, 30) };
     const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
@@ -130,6 +134,7 @@ export default function MapPage({
         
         // 2-3. 카드 데이터 업데이트 (카드 열기)
         setCardData({
+          type: 'DESTINATION',
           title: "📍 목적지 설정",
           description: address
         });
@@ -157,7 +162,7 @@ export default function MapPage({
       mapRef.current = map;
 
       // 초기 마커 (빨간색)
-      const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_b.png';
+      const imageSrc = {destImg};
       const imageSize = new kakao.maps.Size(36, 42);
       const imageOption = { offset: new kakao.maps.Point(15, 30) };
       const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
@@ -272,7 +277,7 @@ export default function MapPage({
       <AnimatePresence>
         {cardData && (
             <motion.div 
-                key="bottom-card"
+                key={cardData.type}
                 ref={cardRef} 
                 className="absolute bottom-0 left-0 right-0 z-50 pointer-events-auto"
                 variants={bottomCardVariants}
@@ -280,11 +285,37 @@ export default function MapPage({
                 animate="visible"
                 exit="exit"
             >
-            <RoadInfoCard
+              {cardData.type === 'ROAD' ? (
+                <RoadInfoCard
                 roadName={cardData.title}       // 대제목 (가로수길 이름 or 목적지 설정)
                 sectionName={cardData.description} // 소제목 (구간 이름 or 주소)
                 isFavorite={false}
-            />
+                />
+              ) : (
+                <div className="bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] p-6 pb-8 mx-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                   <h3 className="text-lg font-bold text-gray-800">{cardData.title}</h3>
+                   <span className="px-2 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full">도착지</span>
+                </div>
+                <p className="mb-4 text-sm text-gray-600">{cardData.description}</p>
+                
+                <div className="flex gap-2">
+                    <button className="flex-1 bg-[#B4B998] text-white py-3 rounded-xl font-bold shadow-md hover:bg-[#A3A889] transition-colors">
+                        이 위치로 경로 탐색
+                    </button>
+                    <button 
+                        onClick={() => {
+                             setCardData(null); // 취소 버튼 (카드 닫기)
+                             if(destinationPinRef.current) destinationPinRef.current.setMap(null); // 핀도 삭제
+                        }}
+                        className="px-4 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl hover:bg-gray-200"
+                    >
+                        취소
+                    </button>
+                </div>
+              </div>
+              )}
+            
             </motion.div>
         )}
       </AnimatePresence>
