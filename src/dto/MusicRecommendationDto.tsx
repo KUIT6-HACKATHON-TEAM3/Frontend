@@ -8,7 +8,7 @@ interface PlaylistInfoDto {
     thumbnail_url: string;
 }
 
-export interface MusiveRecommendationRequestDto {
+export interface MusicRecommendationRequestDto {
     road_id: number;
     weather: Weather;
     time_of_day: TimeOfDay;
