@@ -367,7 +367,9 @@ useEffect(() => {
                     }
                 }}
               className="pointer-events-auto bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-3 flex items-center gap-3">
-              <button className="p-2 text-xl leading-none text-gray-400 rounded-full hover:bg-gray-50">☰</button>
+              <button className="p-2 text-xl leading-none text-gray-400 rounded-full hover:bg-gray-50"
+              onClick={() => navigate("/settings")}
+              >☰</button>
               <input 
                 type="text" 
                 placeholder="어느 길을 걷고 싶으신가요?" 
