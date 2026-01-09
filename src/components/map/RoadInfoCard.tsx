@@ -1,7 +1,6 @@
 import emptyHeart from '@/assets/icons/empty-heart.svg';
 import fullHeart from '@/assets/icons/full-heart.svg';
 //import arrowUp from '@/assets/icons/arrow-up.svg'
-import Button from '../Button';
 
 interface Props {
     roadName: string,
@@ -16,7 +15,7 @@ export default function RoadInfoCard({
 }: Props) {
     return (
         // 디자인 업그레이드 (팀원의 Props 구조는 완벽 유지)
-        <div className="bg-white rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] p-6 pb-8 animate-slide-up w-full">
+        <div className="bg-white rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] p-6 pb-8 w-full">
             
             {/* 핸들바 */}
             <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
@@ -54,11 +53,6 @@ export default function RoadInfoCard({
                 <button className="flex items-center justify-center flex-1 gap-2 py-4 text-sm font-bold text-gray-700 transition-colors bg-gray-50 rounded-2xl hover:bg-gray-100">
                     <span>🎵</span> {/* 음악 아이콘 대체 */}
                     BGM 추천
-                </button>
-
-                <button className="flex-[2] py-4 bg-[#B4B998] text-white rounded-2xl font-bold text-base shadow-lg shadow-[#B4B998]/30 hover:bg-[#9FA482] transition-colors flex items-center justify-center gap-2">
-                    <span>🚀</span> {/* 안내 아이콘 대체 */}
-                    안내 시작
                 </button>
             </div>
         </div>

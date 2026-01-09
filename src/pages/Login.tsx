@@ -80,7 +80,7 @@ export default function Login() {
             <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full mt-4 py-3 bg-primary-500 text-white font-medium rounded-lg shadow-md hover:bg-[#A3A889] transition-colors"
+                className="w-full py-3 mt-4 font-medium text-white transition-colors rounded-lg shadow-md bg-primary-500 hover:bg-primary-900"
                 onClick={handleLogin}
             >
             {isLoading ? "로그인 중..." : "로그인"}
