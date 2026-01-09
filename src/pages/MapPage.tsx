@@ -56,12 +56,17 @@ export default function MapPage({
   const mapRef = useRef<any>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
 
+  // ★ 클릭 충돌 방지용 시간 기록
+  const lastPolylineClickTime = useRef<number>(0);
+
+  const [isSearchVisible, setIsSearchVisible] = useState(true);
   const destinationPinRef = useRef<any>(null);  // 클릭한 위치의 마커
   const [isMapReady, setIsMapReady] = useState(false);
   const [selectedRoad, setSelectedRoad] = useState<string | null>(null);
   const [mapLevel, setMapLevel] = useState(level);
   const [clickedPinLocation, setClickedPinLocation] = useState<LatLng | null>(null);
 
+  const stateRef = useRef({ selectedRoad: null as string | null, isSearchVisible: true });
   useEffect(() => {
     stateRef.current = { selectedRoad, isSearchVisible };
   }, [selectedRoad, isSearchVisible]);
@@ -120,6 +125,7 @@ export default function MapPage({
         setMapLevel(map.getLevel());
       });
 
+      kakao.maps.event.addListener(map, 'click', handleMapClick);
       kakao.maps.event.addListener(map, 'click', (mouseEvent: any) => {
         // 기존 마커가 있으면 제거
         if (destinationPinRef.current) {
