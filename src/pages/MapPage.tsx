@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import type { LatLng } from "../data/all_roads_walking_paths";
 import RoadPolyline from "../components/map/RoadPolyline";
+import RoadInfoCard from "../components/map/RoadInfoCard";
 
 declare global {
   interface Window {
@@ -23,7 +24,10 @@ export default function MapPage({
 }: Props) {
   const divRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);       // kakao.maps.Map
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [selectedRoad, setSelectedRoad] = useState<string | null>(null);
+  const [mapLevel, setMapLevel] = useState(level);
 
   useEffect(() => {
     if (!divRef.current) return;
@@ -43,6 +47,12 @@ export default function MapPage({
         position: new kakao.maps.LatLng(center.lat, center.lng),
       });
       marker.setMap(map);
+
+      // 지도 레벨 변경 이벤트 리스너 등록
+      kakao.maps.event.addListener(map, 'zoom_changed', () => {
+        const level = map.getLevel();
+        setMapLevel(level);
+      });
 
       // 지도 준비 완료
       setIsMapReady(true);
@@ -84,8 +94,34 @@ export default function MapPage({
     };
   }, [appKey, center.lat, center.lng, level]);
 
+  const handleRoadSelect = useCallback((roadName: string) => {
+    console.log('Road selected:', roadName);
+    setSelectedRoad(roadName);
+  }, []);
+
+  // 카드 밖 클릭 감지
+  useEffect(() => {
+    if (!selectedRoad) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+        setSelectedRoad(null);
+      }
+    };
+
+    // 약간의 지연을 주어 도로 클릭 이벤트와 겹치지 않도록 함
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [selectedRoad]);
+
   return (
-    <>
+    <div className="relative w-full h-screen">
       <div ref={divRef} style={{ width: "100%", height: 932 }} />
       {isMapReady && mapRef.current &&
         Array.from(pointsByRoad.entries()).map(([roadName, points]) => (
@@ -93,14 +129,21 @@ export default function MapPage({
             key={roadName}
             map={mapRef.current}
             points={points}
-            roadName={roadName}
-            onRoadSelect={() => {
-              console.log(`${roadName} 클릭됨!`);
-              // 여기서 원하는 동작을 추가할 수 있습니다
-            }}
+            sectionName={roadName}
+            mapLevel={mapLevel}
+            onRoadSelect={() => handleRoadSelect(roadName)}
           />
         ))
       }
-    </>
+      {selectedRoad && (
+        <div ref={cardRef} className="absolute bottom-0 left-0 right-0 bg-white shadow-lg p-0 z-50 rounded-t-3xl overflow-hidden">
+          <RoadInfoCard
+            roadName={selectedRoad.split(' ')[0]}
+            sectionName={selectedRoad}
+            isFavorite={false}
+          />
+        </div>
+      )}
+    </div>
   );
 }

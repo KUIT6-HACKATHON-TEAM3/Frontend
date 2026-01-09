@@ -1,10 +1,12 @@
 import { useEffect, useRef } from "react";
 import type { LatLng } from "../../data/all_roads_walking_paths";
+import { COLORS } from "../../constants/colors";
 
 type Props = {
   map: any; // kakao.maps.Map
   points: LatLng[];
-  roadName: string;
+  sectionName: string;
+  mapLevel: number;
   strokeColor?: string;
   strokeWeight?: number;
   strokeOpacity?: number;
@@ -14,13 +16,23 @@ type Props = {
 export default function RoadPolyline({
   map,
   points,
-  roadName,
-  strokeColor = "#B9BE94",
+  sectionName,
+  mapLevel,
+  strokeColor = COLORS.primary[500],
   strokeWeight = 5,
   strokeOpacity = 1,
   onRoadSelect,
 }: Props) {
+  // 지도 레벨에 따른 strokeWeight 계산
+  // 레벨이 낮을수록(확대) 더 두껍게, 레벨이 높을수록(축소) 더 얇게
+  const calculatedStrokeWeight = Math.max(1, strokeWeight - mapLevel + 3);
   const polylineRef = useRef<any>(null);
+  const onRoadSelectRef = useRef(onRoadSelect);
+
+  // 최신 onRoadSelect를 ref에 저장
+  useEffect(() => {
+    onRoadSelectRef.current = onRoadSelect;
+  }, [onRoadSelect]);
 
   useEffect(() => {
     if (!map || !window.kakao) return;
@@ -37,7 +49,7 @@ export default function RoadPolyline({
     const polyline = new kakao.maps.Polyline({
       path,
       strokeColor,
-      strokeWeight,
+      strokeWeight: calculatedStrokeWeight,
       strokeOpacity,
       strokeStyle: "solid",
       clickable: true, // 클릭 가능하도록 설정
@@ -49,23 +61,23 @@ export default function RoadPolyline({
     // 마우스오버 효과
     kakao.maps.event.addListener(polyline, "mouseover", () => {
       polyline.setOptions({
-        strokeColor: "#E0FF02",
-        strokeWeight: strokeWeight + 3,
+        strokeColor: COLORS.primary[900],
+        strokeWeight: calculatedStrokeWeight + 3,
         strokeOpacity: 1,
       });
     });
 
     kakao.maps.event.addListener(polyline, "mouseout", () => {
       polyline.setOptions({
-        strokeColor: "#B9BE94",
-        strokeWeight,
+        strokeColor: COLORS.primary[500],
+        strokeWeight: calculatedStrokeWeight,
         strokeOpacity,
       });
     });
 
     // 클릭 이벤트 등록
     kakao.maps.event.addListener(polyline, "click", () => {
-      onRoadSelect();
+      onRoadSelectRef.current();
     });
 
     // cleanup
@@ -74,7 +86,7 @@ export default function RoadPolyline({
         polylineRef.current.setMap(null);
       }
     };
-  }, [map, points, roadName, strokeColor, strokeWeight, strokeOpacity, onRoadSelect]);
+  }, [map, points, sectionName, mapLevel, strokeColor, strokeWeight, strokeOpacity, calculatedStrokeWeight]);
 
   return null; // 이 컴포넌트는 UI를 렌더링하지 않음
 }
