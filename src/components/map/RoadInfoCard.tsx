@@ -2,21 +2,27 @@ import emptyHeart from '@/assets/icons/empty-heart.svg';
 import fullHeart from '@/assets/icons/full-heart.svg';
 //import arrowUp from '@/assets/icons/arrow-up.svg'
 
+interface Emoji {
+    emoji: string;
+    label: string;
+}
+
 interface Props {
     roadName: string;
+    emotions: Emoji[],
     sectionName: string;
     isFavorite: boolean;
-    onLikeClick: () => void;
+    onAddFavorite: () => void,
 }
 
 export default function RoadInfoCard({
     roadName,
+    emotions = [{emoji: "✨", label:"야경맛집"}, {emoji:"👫", label:"데이트코스"}, {emoji: "🌳", label:"나무그늘"}, {emoji:"🐶", label:"댕댕이천국"}],
     sectionName,
     isFavorite,
-    onLikeClick,
+    onAddFavorite,
 }: Props) {
     return (
-        // 
         <div className="bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.15)] p-6 pb-8 w-full">
             {/* 헤더 영역 */}
             <div className="flex flex-row items-start justify-between mb-6">
@@ -28,7 +34,7 @@ export default function RoadInfoCard({
                     <h3 className='text-sm text-gray-500'>{sectionName} • 1.2km</h3>
                 </div>
 
-                <button onClick={onLikeClick} className="transition-transform active:scale-95 hover:opacity-80">
+                <button className="transition-transform active:scale-95 hover:opacity-80" onClick={onAddFavorite}>
                     <img 
                         src={isFavorite ? fullHeart : emptyHeart} 
                         alt="찜하기" 
@@ -39,11 +45,13 @@ export default function RoadInfoCard({
 
             {/* 태그 영역 */}
             <div className="flex gap-2 pb-1 mb-6 overflow-x-auto scrollbar-hide">
-                {["✨ 야경맛집", "👫 데이트코스", "🌳 나무그늘", "🐶 댕댕이천국"].map((tag, i) => (
-                  <span key={i} className="px-3 py-1.5 bg-gray-50 text-gray-600 text-xs font-medium rounded-lg whitespace-nowrap">
-                    {tag}
-                  </span>
-                ))}
+                {emotions.map((e, i) => {
+                    return (
+                        <span key={i} className="px-3 py-1.5 bg-gray-50 text-gray-600 text-xs font-medium rounded-lg whitespace-nowrap">
+                            <div>{e.emoji} {e.label}</div>
+                        </span>
+                    );
+                })}
             </div>
 
             {/* 하단 버튼 영역 */}

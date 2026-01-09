@@ -12002,9 +12002,17 @@ const STREETS = [
 
 export type LatLng = { lat: number; lng: number };
 
-export const pointsByRoad = new Map<string, LatLng[]>();
+export type RoadData = {
+  segmentId: number;
+  path: LatLng[];
+};
+
+export const pointsByRoad = new Map<string, RoadData>();
 
 STREETS.forEach(s => {
   const sectionName = s.section_name;
-  pointsByRoad.set(sectionName, s.path_geometry);
+  pointsByRoad.set(sectionName, {
+    segmentId: s.segment_id,
+    path: s.path_geometry
+  });
 });

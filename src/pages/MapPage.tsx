@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import type { LatLng } from "../data/all_roads_walking_paths";
+import type { LatLng, RoadData } from "../data/all_roads_walking_paths";
 import RoadPolyline from "../components/map/RoadPolyline";
 import RoadInfoCard from "../components/map/RoadInfoCard";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,8 +7,9 @@ import type { Variants } from "framer-motion";
 import curlogImg from "@/assets/icons/current-location.svg"
 import destImg from "@/assets/icons/destination.svg"
 import RouteSelectionCard from "../components/map/RouteSelectionCard";
+import { routesApi } from "../api/routes";
 import { useNavigate } from "react-router-dom";
-const ESTIMATED_MIN_TIME = 12; // 예시
+import useFavoriteRoadsStore from "../stores/FavoriteRoadsStore";
 
 declare global {
   interface Window {
@@ -49,7 +50,7 @@ type Props = {
   appKey: string;
   center?: { lat: number; lng: number };
   level?: number;
-  pointsByRoad: Map<string, LatLng[]>;
+  pointsByRoad: Map<string, RoadData>;
 };
 
 // 카드에 표시할 데이터 타입 정의
@@ -58,6 +59,24 @@ interface CardData {
   title: string;       // 예: "능동로 가로수길" 또는 "📍 선택한 위치"
   description: string; // 예: "1구간" 또는 "서울 광진구 ..."
   isFavorite?: boolean;
+  estimatedTime: number | null; // 예상 도보 시간 (분)
+  segmentId?: number;  // ROAD 타입일 때 사용
+}
+
+// Haversine 공식을 사용한 거리 계산 함수 (미터 단위)
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371e3; // 지구 반지름 (미터)
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // 미터 단위
 }
 
 export default function MapPage({
@@ -86,9 +105,18 @@ export default function MapPage({
 
   // 검색어 상태관리
   const [searchKeyword, setSearchKeyword] = useState("");
+  // 검색된 경로 (파란색으로 표시)
+  const [searchedPath, setSearchedPath] = useState<LatLng[] | null>(null);
+
+  // Zustand store에서 즐겨찾기 관련 함수들 가져오기
+  const { isFavorite: checkIsFavorite, addFavorite, removeFavoriteBySegmentId, loadFavorites } = useFavoriteRoadsStore();
+
+  // 현재 카드의 segment_id에 대한 즐겨찾기 상태
+  const isFavorite = cardData?.segmentId ? checkIsFavorite(cardData.segmentId) : false;
+
 
   // 1. 선(Polyline) 클릭 핸들러
-  const handleRoadSelect = useCallback((roadName: string) => {
+  const handleRoadSelect = useCallback((roadName: string, segmentId: number) => {
     lastPolylineClickTime.current = Date.now();
     
     // 선을 누르면 마커 지우기
@@ -101,9 +129,11 @@ export default function MapPage({
       type: 'ROAD',
       title: "능동로 가로수길", // 대제목
       description: roadName,    // 소제목 (구간 이름)
-      isFavorite: false
+      estimatedTime: null,
+      isFavorite: false,
+      segmentId: segmentId,
     });
-    setIsSearchVisible(true); 
+    setIsSearchVisible(true);
   }, []);
 
   const handleLike = () => {
@@ -207,7 +237,8 @@ export default function MapPage({
         setCardData({
           type: 'DESTINATION',
           title: "📍 목적지 설정",
-          description: address
+          description: address,
+          estimatedTime: null
         });
         setIsSearchVisible(true);
       }
@@ -285,6 +316,11 @@ useEffect(() => {
   }
 }, []);
 
+  // 즐겨찾기 목록 로드
+  useEffect(() => {
+    loadFavorites();
+  }, [loadFavorites]);
+
   useEffect(() => {
     if (!appKey || !divRef.current) return;
 
@@ -302,7 +338,7 @@ useEffect(() => {
       const map = new kakao.maps.Map(divRef.current, options);
       mapRef.current = map;
 
-      // 초기 마커 (빨간색)
+      // 초기 마커 (색)
       const imageSrc = curlogImg;
       const imageSize = new kakao.maps.Size(36, 42);
       const imageOption = { offset: new kakao.maps.Point(15, 30) };
@@ -424,14 +460,14 @@ useEffect(() => {
          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-gray-500 pointer-events-none bg-gray-200/90">
             <div className="flex flex-col items-center pointer-events-auto">
                 <p className="mb-2 text-xl font-bold">🚫 지도 API 키 없음</p>
-                <button 
+                <button
                 onClick={(e) => {
                     e.stopPropagation();
                     // 테스트용 가짜 데이터 주입
                     if(cardData) {
-                        setCardData(null); 
+                        setCardData(null);
                     } else {
-                        handleRoadSelect("능동로 가로수길 1구간");
+                        handleRoadSelect("능동로 가로수길 1구간", 1);
                     }
                 }}
                 className="px-6 py-3 mt-4 bg-white text-[#B4B998] font-bold rounded-xl shadow-md border border-[#B4B998]"
@@ -443,18 +479,33 @@ useEffect(() => {
       )}
 
       {isMapReady && mapRef.current &&
-        Array.from(pointsByRoad.entries()).map(([roadName, points]) => (
+        Array.from(pointsByRoad.entries()).map(([roadName, roadData]) => (
           <RoadPolyline
             key={roadName}
             map={mapRef.current}
-            points={points}
+            points={roadData.path}
             sectionName={roadName}
             mapLevel={mapLevel}
-            onRoadSelect={() => handleRoadSelect(roadName)}
+            onRoadSelect={() => handleRoadSelect(roadName, roadData.segmentId)}
           />
         ))
       }
-      
+
+      {/* 검색된 경로 (파란색) */}
+      {isMapReady && mapRef.current && searchedPath && (
+        <RoadPolyline
+          key="searched-route"
+          map={mapRef.current}
+          points={searchedPath}
+          sectionName="검색된 경로"
+          mapLevel={mapLevel}
+          strokeColor="#0066FF"
+          strokeWeight={6}
+          strokeOpacity={0.9}
+          onRoadSelect={() => {}}
+        />
+      )}
+
       {/* 하단 카드 영역 */}
       <AnimatePresence mode="wait">
         {cardData && (
@@ -520,8 +571,20 @@ useEffect(() => {
               <RoadInfoCard
                 roadName={cardData.title}
                 sectionName={cardData.description}
-                isFavorite={cardData.isFavorite || false}
-                onLikeClick={handleLike}
+                emotions={[{emoji: "✨", label:"야경맛집"}, {emoji:"👫", label:"데이트코스"}, {emoji: "🌳", label:"나무그늘"}, {emoji:"🐶", label:"댕댕이천국"}]}
+                isFavorite={isFavorite}
+                onAddFavorite={async () => {
+                  // handleLike()
+                  if (!cardData.segmentId) return;
+
+                  if (isFavorite) {
+                    // 이미 즐겨찾기되어 있으면 삭제
+                    await removeFavoriteBySegmentId(cardData.segmentId);
+                  } else {
+                    // 즐겨찾기 추가
+                    await addFavorite(cardData.segmentId, cardData.title);
+                  }
+                }}
               />
               </motion.div>
             )}
@@ -538,7 +601,22 @@ useEffect(() => {
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
-                        setCardData({ ...cardData, type: 'ROUTE_OPTIONS' });
+                        if (!destinationPinRef.current) return;
+
+                        // 목적지 좌표 가져오기
+                        const destPosition = destinationPinRef.current.getPosition();
+                        const destLat = destPosition.getLat();
+                        const destLng = destPosition.getLng();
+
+                        // Haversine 공식으로 거리 계산 (미터)
+                        const distanceInMeters = Math.round(
+                          calculateDistance(center.lat, center.lng, destLat, destLng)
+                        );
+
+                        // 도보 예상 시간 계산 (카카오맵 기준: 67m/분)
+                        const walkingTimeInMinutes = Math.ceil(distanceInMeters / 67);
+
+                        setCardData({ ...cardData, type: 'ROUTE_OPTIONS', estimatedTime: walkingTimeInMinutes });
                     }}
                     className="flex-1 bg-[#B4B998] text-white py-3 rounded-xl font-bold shadow-md hover:bg-[#A3A889] transition-colors"
                   >
@@ -547,6 +625,7 @@ useEffect(() => {
                   <button
                     onClick={() => {
                       setCardData(null);
+                      setSearchedPath(null); // 경로 초기화
                       if (destinationPinRef.current) destinationPinRef.current.setMap(null);
                     }}
                     className="px-4 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl hover:bg-gray-200"
@@ -561,11 +640,42 @@ useEffect(() => {
             {cardData.type === 'ROUTE_OPTIONS' && (
               <motion.div layout="position" className="h-full">
               <RouteSelectionCard
-                minTime={ESTIMATED_MIN_TIME}
+                minTime={cardData.estimatedTime}
                 onBack={() => setCardData({ ...cardData, type: 'DESTINATION' })}
-                onSelectRoute={(type, totalTime) => {
-                    console.log(`선택된 경로: ${type}, 총 소요 시간: ${totalTime}분`);
-                      // 여기에 실제 경로 탐색 API 호출 로직 추가
+                onSelectRoute={async (type, addedTime) => {
+                    try {
+                      const response = await routesApi.search({
+                        user_location: {lat: center.lat, lng: center.lng},
+                        pin_location: {lat: destinationPinRef.current.lat, lng: destinationPinRef.current.lng},
+                        added_time_req: addedTime
+                      });
+
+                      console.log('경로 검색 결과:', response);
+
+                      // 선택한 경로 타입에 따라 path 선택
+                      const path = addedTime === 0
+                        ? response.data.fastest.path
+                        : response.data.avenue.path;
+
+                      // 경로를 state에 저장 (다음 렌더링에서 파란색 Polyline으로 표시)
+                      setSearchedPath(path);
+
+                      // 로깅
+                      if (addedTime === 0) {
+                        console.log('최소길 경로:', response.data.fastest);
+                        console.log('소요시간:', response.data.fastest.summary.actual_time, '분');
+                        console.log('거리:', response.data.fastest.summary.distance_meter, 'm');
+                      } else {
+                        console.log('여유길 경로:', response.data.avenue);
+                        console.log('소요시간:', response.data.avenue.summary.actual_time, '분');
+                        console.log('거리:', response.data.avenue.summary.distance_meter, 'm');
+                        console.log('안내 메시지:', response.data.avenue.summary.display_msg);
+                      }
+
+                    } catch (error) {
+                      console.error('경로 검색 실패:', error);
+                      // TODO: 에러 처리 (사용자에게 알림 표시 등)
+                    }
                 }}
               />
               </motion.div>
