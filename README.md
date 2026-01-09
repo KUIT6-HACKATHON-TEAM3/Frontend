@@ -65,6 +65,12 @@ src/
 │   └── Settings.tsx     # 설정 및 마이페이지
 ├── api/
 │   └── auth.ts          # 로그인/회원가입 API 호출 로직
+│   └── emoji.ts         
+│   └── favorite.ts          
+│   └── http.ts          
+│   └── music.ts          
+│   └── roads.ts          
+│   └── routes.ts          
 ├── data/
 │   └── all_roads_walking_paths.ts # 산책로 좌표 데이터
 └── App.tsx              # 라우팅 설정
@@ -115,3 +121,7 @@ npm run dev
 * **Responsive Map Control**: 지도 레벨(Zoom Level)에 따라 산책로 선의 두께(`strokeWeight`)가 동적으로 조절됨.
 
 ## 📜 라이센스
+
+
+## 배포 url
+https://frontend-ochre-chi-68.vercel.app/

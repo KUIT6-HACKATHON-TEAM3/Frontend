@@ -5,7 +5,9 @@ import type { DeleteFavoriteRoadResponseDto } from "../dto/DeleteFavoriteRoadRes
 
 export const favoritesApi = {
   async add(body: CreateFavoriteRoadRequestDto) {
-    const { data } = await http.post<CreateFavoriteRoadResponseDto>("/api/favorites", body);
+    const { data } = await http.post<CreateFavoriteRoadResponseDto>("/api/favorites", body, {
+      withCredentials: false
+    });
     return data;
   },
 

@@ -108,11 +108,13 @@ export default function MapPage({
   // 검색된 경로 (파란색으로 표시)
   const [searchedPath, setSearchedPath] = useState<LatLng[] | null>(null);
 
-  // Zustand store에서 즐겨찾기 관련 함수들 가져오기
-  const { isFavorite: checkIsFavorite, addFavorite, removeFavoriteBySegmentId, loadFavorites } = useFavoriteRoadsStore();
+  const [isFavorite, setIsFavorite ] = useState(false);
 
-  // 현재 카드의 segment_id에 대한 즐겨찾기 상태
-  const isFavorite = cardData?.segmentId ? checkIsFavorite(cardData.segmentId) : false;
+  // // Zustand store에서 즐겨찾기 관련 함수들 가져오기
+  // const { isFavorite: checkIsFavorite, addFavorite, removeFavoriteBySegmentId, loadFavorites } = useFavoriteRoadsStore();
+
+  // // 현재 카드의 segment_id에 대한 즐겨찾기 상태
+  // const isFavorite = cardData?.segmentId ? checkIsFavorite(cardData.segmentId) : false;
 
 
   // 1. 선(Polyline) 클릭 핸들러
@@ -267,10 +269,10 @@ useEffect(() => {
   }
 }, []);
 
-  // 즐겨찾기 목록 로드
-  useEffect(() => {
-    loadFavorites();
-  }, [loadFavorites]);
+  // // 즐겨찾기 목록 로드
+  // useEffect(() => {
+  //   loadFavorites();
+  // }, [loadFavorites]);
 
   useEffect(() => {
     if (!appKey || !divRef.current) return;
@@ -527,20 +529,20 @@ useEffect(() => {
                 emotions={[{emoji: "✨", label:"야경맛집"}, {emoji:"👫", label:"데이트코스"}, {emoji: "🌳", label:"나무그늘"}, {emoji:"🐶", label:"댕댕이천국"}]}
                 isFavorite={isFavorite}
                 onAddFavorite={async () => {
-                  // if (!localStorage.getItem("refreshToken")) {
-                  //   if (window.confirm("로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?")) {navigate("/login");}
-                  //   return;
+
+                  // if (!cardData.segmentId) return;
+
+                  // if (isFavorite) {
+                  //   // 이미 즐겨찾기되어 있으면 삭제
+                  //   await removeFavoriteBySegmentId(cardData.segmentId);
+                  // } else {
+                  //   // 즐겨찾기 추가
+                  //   await addFavorite(cardData.segmentId, cardData.title);
                   // }
 
-                  if (!cardData.segmentId) return;
-
-                  if (isFavorite) {
-                    // 이미 즐겨찾기되어 있으면 삭제
-                    await removeFavoriteBySegmentId(cardData.segmentId);
-                  } else {
-                    // 즐겨찾기 추가
-                    await addFavorite(cardData.segmentId, cardData.title);
-                  }
+                  const newFavorite = !isFavorite;
+                  setIsFavorite(newFavorite);
+                  
                 }}
               />
               </motion.div>
