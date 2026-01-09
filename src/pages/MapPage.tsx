@@ -192,7 +192,8 @@ export default function MapPage({
       setCardData({
           type: 'DESTINATION',
           title: name || "📍 선택한 위치", // 장소명이 있으면 장소명, 없으면 기본값
-          description: address || "주소 정보 없음"
+          description: address || "주소 정보 없음",
+          estimatedTime: 0,
       });
       setIsSearchVisible(true);
   }, []);
@@ -410,6 +411,7 @@ useEffect(() => {
               <button className="p-2 text-xl leading-none text-gray-400 rounded-full hover:bg-gray-50"
               onClick={() => navigate("/settings")}
               >☰</button>
+
               <input type="text" placeholder="어느 길을 걷고 싶으신가요?" className="flex-1 text-sm font-medium text-gray-700 placeholder-gray-400 outline-none" />
               <button className="p-2 text-[#B4B998] hover:bg-gray-50 rounded-full text-xl leading-none">🔍</button>
             <div 
@@ -455,6 +457,7 @@ useEffect(() => {
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
               </button>
+            </div>
             </div>
           </motion.div>
         )}
