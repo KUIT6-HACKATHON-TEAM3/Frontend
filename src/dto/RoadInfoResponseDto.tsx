@@ -1,6 +1,11 @@
+interface EmotionDto {
+    emoji: string;
+    label: string;
+}
 interface RoadInfoDataDto {
-    segmen_id: number;
+    segment_id: number;
     road_name: string;
+    emotions: EmotionDto[];
     total_like_count: number;
     is_liked: boolean;
 }

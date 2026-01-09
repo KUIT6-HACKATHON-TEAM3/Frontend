@@ -12,6 +12,9 @@ export default {
           500: "#3E6B4F",
           900: "#B3B3B3"  // transition color
         },
+        emphasize: {
+          500: "#3E6B4F",
+        },
         text: {
           200: "#7B7B7B",
           300: "#3D3D3D",
