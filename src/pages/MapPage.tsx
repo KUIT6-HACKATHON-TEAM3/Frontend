@@ -114,7 +114,7 @@ export default function MapPage({
       destinationPinRef.current.setMap(null);
     }
 
-    const imageSrc = {curlogImg};
+    const imageSrc = destImg;
     const imageSize = new kakao.maps.Size(36, 42);
     const imageOption = { offset: new kakao.maps.Point(15, 30) };
     const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
@@ -163,7 +163,7 @@ export default function MapPage({
       mapRef.current = map;
 
       // 초기 마커 (빨간색)
-      const imageSrc = {destImg};
+      const imageSrc = curlogImg;
       const imageSize = new kakao.maps.Size(36, 42);
       const imageOption = { offset: new kakao.maps.Point(15, 30) };
       const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
