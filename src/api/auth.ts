@@ -16,6 +16,7 @@ export type AuthRes = {
   message: string;
   data: {
     refresh_token: string;
+    nickname: string;
   }
 };
 

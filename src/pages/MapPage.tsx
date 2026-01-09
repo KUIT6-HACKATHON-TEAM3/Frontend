@@ -127,7 +127,7 @@ export default function MapPage({
 
     setCardData({
       type: 'ROAD',
-      title: "능동로 가로수길", // 대제목
+      title: roadName.split(" ")[0], // 대제목
       description: roadName,    // 소제목 (구간 이름)
       estimatedTime: null,
       isFavorite: false,
@@ -406,6 +406,12 @@ useEffect(() => {
             exit="exit"
             className="absolute z-40 pointer-events-none top-4 left-4 right-4"
           >
+            <div className="pointer-events-auto bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-3 flex items-center gap-3">
+              <button className="p-2 text-xl leading-none text-gray-400 rounded-full hover:bg-gray-50"
+              onClick={() => navigate("/settings")}
+              >☰</button>
+              <input type="text" placeholder="어느 길을 걷고 싶으신가요?" className="flex-1 text-sm font-medium text-gray-700 placeholder-gray-400 outline-none" />
+              <button className="p-2 text-[#B4B998] hover:bg-gray-50 rounded-full text-xl leading-none">🔍</button>
             <div 
               // ★ 수정: 검색바 컨테이너 클릭 시 카드가 있다면 닫기
                 onClick={() => {
@@ -574,7 +580,11 @@ useEffect(() => {
                 emotions={[{emoji: "✨", label:"야경맛집"}, {emoji:"👫", label:"데이트코스"}, {emoji: "🌳", label:"나무그늘"}, {emoji:"🐶", label:"댕댕이천국"}]}
                 isFavorite={isFavorite}
                 onAddFavorite={async () => {
-                  // handleLike()
+                  if (!localStorage.getItem("refreshToken")) {
+                    if (window.confirm("로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?")) {navigate("/login");}
+                    return;
+                  }
+
                   if (!cardData.segmentId) return;
 
                   if (isFavorite) {
