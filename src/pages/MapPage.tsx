@@ -4,9 +4,9 @@ import RoadPolyline from "../components/map/RoadPolyline";
 import RoadInfoCard from "../components/map/RoadInfoCard";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Variants } from "framer-motion";
-import curlogImg from "../assets/icons/current-location.svg"
-import destImg from "../assets/icons/destination.svg"
-
+import curlogImg from "@/assets/icons/current-location.svg"
+import destImg from "@/assets/icons/destination.svg"
+import RouteSelectionCard from "../components/map/RouteSelectionCard";
 
 declare global {
   interface Window {
@@ -52,7 +52,7 @@ type Props = {
 
 // 카드에 표시할 데이터 타입 정의
 interface CardData {
-  type: 'ROAD' | 'DESTINATION';
+  type: 'ROAD' | 'DESTINATION' | 'ROUTE_OPTIONS';
   title: string;       // 예: "능동로 가로수길" 또는 "📍 선택한 위치"
   description: string; // 예: "1구간" 또는 "서울 광진구 ..."
 }
@@ -272,51 +272,82 @@ export default function MapPage({
           />
         ))
       }
-
-      {/* 하단 카드 */}
-      <AnimatePresence>
+      
+      {/* 하단 카드 영역 */}
+      <AnimatePresence mode="wait">
         {cardData && (
-            <motion.div 
-                key={cardData.type}
-                ref={cardRef} 
-                className="absolute bottom-0 left-0 right-0 z-50 pointer-events-auto"
-                variants={bottomCardVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-            >
-              {cardData.type === 'ROAD' ? (
-                <RoadInfoCard
-                roadName={cardData.title}       // 대제목 (가로수길 이름 or 목적지 설정)
-                sectionName={cardData.description} // 소제목 (구간 이름 or 주소)
+          <motion.div
+            key="bottom-card" // ★ 중요: 이 키가 변하면 안 됩니다! (그래야 카드가 유지되면서 커짐)
+            layout // ★ 크기/위치 변화 자동 애니메이션
+            ref={cardRef}
+            className={`absolute bottom-0 left-0 right-0 z-50 pointer-events-auto bg-white 
+              ${cardData.type === 'ROUTE_OPTIONS' 
+                ? 'h-screen rounded-none' // 전체 화면
+                : 'rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)]' // 일반 모드
+              }`}
+            variants={bottomCardVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            // ★ 수정됨: 속도를 늦춰서 애니메이션이 '잘 보이게' 변경
+            transition={{ 
+                type: "spring", 
+                damping: 25,    // 반동을 줄이고 부드럽게 (기존 20 -> 25)
+                stiffness: 60,  // 속도를 늦춤 (기존 100 -> 60)
+                mass: 0.8 
+            }}
+          >
+            {/* 1. 길 정보 (ROAD) */}
+            {cardData.type === 'ROAD' && (
+              <RoadInfoCard
+                roadName={cardData.title}
+                sectionName={cardData.description}
                 isFavorite={false}
-                />
-              ) : (
-                <div className="bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] p-6 pb-8 mx-4 mb-4">
+              />
+            )}
+
+            {/* 2. 목적지 정보 (DESTINATION) */}
+            {cardData.type === 'DESTINATION' && (
+              <div className="w-full p-6 pb-8">
+                <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
                 <div className="flex items-center justify-between mb-2">
-                   <h3 className="text-lg font-bold text-gray-800">{cardData.title}</h3>
-                   <span className="px-2 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full">도착지</span>
+                  <h3 className="text-lg font-bold text-gray-800">{cardData.title}</h3>
+                  <span className="px-2 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full">도착지</span>
                 </div>
                 <p className="mb-4 text-sm text-gray-600">{cardData.description}</p>
-                
+
                 <div className="flex gap-2">
-                    <button className="flex-1 bg-[#B4B998] text-white py-3 rounded-xl font-bold shadow-md hover:bg-[#A3A889] transition-colors">
-                        이 위치로 경로 탐색
-                    </button>
-                    <button 
-                        onClick={() => {
-                             setCardData(null); // 취소 버튼 (카드 닫기)
-                             if(destinationPinRef.current) destinationPinRef.current.setMap(null); // 핀도 삭제
-                        }}
-                        className="px-4 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl hover:bg-gray-200"
-                    >
-                        취소
-                    </button>
+                  <button
+                    onClick={() => {
+                        setCardData({ ...cardData, type: 'ROUTE_OPTIONS' });
+                    }}
+                    className="flex-1 bg-[#B4B998] text-white py-3 rounded-xl font-bold shadow-md hover:bg-[#A3A889] transition-colors"
+                  >
+                    이 위치로 경로 탐색
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCardData(null);
+                      if (destinationPinRef.current) destinationPinRef.current.setMap(null);
+                    }}
+                    className="px-4 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl hover:bg-gray-200"
+                  >
+                    취소
+                  </button>
                 </div>
               </div>
-              )}
-            
-            </motion.div>
+            )}
+
+            {/* 3. 경로 선택 옵션 (ROUTE_OPTIONS) */}
+            {cardData.type === 'ROUTE_OPTIONS' && (
+              <RouteSelectionCard
+                onBack={() => setCardData({ ...cardData, type: 'DESTINATION' })}
+                onSelectRoute={(type) => {
+                    console.log("선택된 경로:", type);
+                }}
+              />
+            )}
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
