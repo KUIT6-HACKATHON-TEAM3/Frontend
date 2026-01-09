@@ -19,6 +19,8 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />}/>
         <Route path="/signup" element={<Signup />}/>
+        <Route path='/' element={<MapPage appKey={import.meta.env.VITE_KAKAO_JS_KEY } pointsByRoad={pointsByRoad}/>}/>
+
         <Route path='/map' element={<MapPage appKey={import.meta.env.VITE_KAKAO_JS_KEY } pointsByRoad={pointsByRoad}/>}/>
       </Routes>
     </BrowserRouter>
