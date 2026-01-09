@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import axios from "axios";
+import { authApi } from "../api/auth";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -8,6 +8,7 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignup = async () => {
     if(!email || !password || !nickname){
@@ -15,23 +16,26 @@ export default function Signup() {
       return;
     }
 
+    setIsLoading(true);
+
     try{
       //[API]
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/signup`, {
-        email: email,
-        password: password,
-        nickname: nickname
+      const response = await authApi.signup({
+        email,
+        password,
+        nickname
       });
 
       console.log("회원가입 응답:", response.data);
-
-      if(response.data.this.status === 201){
-        alert("회원가입이 완료되었습니다! 로그인해주세요.");
-        navigate("/login");
-      }
+      
+      alert("회원가입이 완료되었습니다! 로그인해주세요.");
+      navigate("/login");
+      
     } catch (error: any) {
       console.error("회원가입 에러:", error);
       alert("회원가입에 실패했습니다.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -45,24 +49,31 @@ export default function Signup() {
         <input
           type="email"
           placeholder="이메일"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           className="w-full px-4 py-3 bg-white rounded-lg text-sm placeholder-gray-500 outline-none shadow-sm focus:ring-2 focus:ring-[#B4B998]/50 transition-all"
         />
         <input
           type="text"
           placeholder="닉네임"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
           className="w-full px-4 py-3 bg-white rounded-lg text-sm placeholder-gray-500 outline-none shadow-sm focus:ring-2 focus:ring-[#B4B998]/50 transition-all"
         />
         <input
           type="password"
           placeholder="비밀번호"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           className="w-full px-4 py-3 bg-white rounded-lg text-sm placeholder-gray-500 outline-none shadow-sm focus:ring-2 focus:ring-[#B4B998]/50 transition-all"
         />
 
         <button
+          onClick={handleSignup}
+          disabled={isLoading}
           className="w-full py-3 mt-8 font-medium text-white transition-colors rounded-lg shadow-md bg-primary-500 hover:bg-primary-900"
-          onClick={() => navigate("/login")} // 가입 후 로그인 페이지로 이동 (예시)
         >
-          가입하기
+          {isLoading ? "가입 중..." : "가입하기"}
         </button>
         <button 
           onClick={() => navigate("/login")}

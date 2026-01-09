@@ -8,10 +8,10 @@ interface Emoji {
 }
 
 interface Props {
-    roadName: string,
+    roadName: string;
     emotions: Emoji[],
-    sectionName: string,
-    isFavorite: boolean,
+    sectionName: string;
+    isFavorite: boolean;
     onAddFavorite: () => void,
 }
 
