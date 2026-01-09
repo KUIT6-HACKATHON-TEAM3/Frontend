@@ -59,7 +59,7 @@ export default function Signup() {
         />
 
         <button
-          className="w-full mt-8 py-3 bg-[#B4B998] text-white font-medium rounded-lg shadow-md hover:bg-[#A3A889] transition-colors"
+          className="w-full py-3 mt-8 font-medium text-white transition-colors rounded-lg shadow-md bg-primary-500 hover:bg-primary-900"
           onClick={() => navigate("/login")} // 가입 후 로그인 페이지로 이동 (예시)
         >
           가입하기
