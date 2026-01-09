@@ -1,6 +1,5 @@
-import { http, tokenStorage } from "./http"
+import { http, tokenStorage } from "./http";
 
-// ---- Request/Response 타입(서버 스펙에 맞게 수정) ----
 export type SignupReq = {
   email: string;
   password: string;
@@ -13,9 +12,11 @@ export type LoginReq = {
 };
 
 export type AuthRes = {
-  refresh_token: string; // 서버는 snake_case로 응답
-  // accessToken은 쿠키로 전달됨
-  // user?: {...}
+  status: number;
+  message: string;
+  data: {
+    refresh_token: string;
+  }
 };
 
 export type SendEmailCodeReq = { email: string };
@@ -30,7 +31,7 @@ export const authApi = {
   async login(body: LoginReq) {
     const { data } = await http.post<AuthRes>("/api/auth/login", body);
     // accessToken은 쿠키로 자동 저장됨
-    tokenStorage.setRefreshToken(data.refresh_token);
+    tokenStorage.setRefreshToken(data.data.refresh_token);
     return data;
   },
 
@@ -47,7 +48,7 @@ export const authApi = {
   async reissue(refreshToken: string) {
     const { data } = await http.post<AuthRes>("/api/auth/reissue", { refreshToken });
     // accessToken은 쿠키로 자동 저장됨
-    tokenStorage.setRefreshToken(data.refresh_token);
+    tokenStorage.setRefreshToken(data.data.refresh_token);
     return data;
   },
 
