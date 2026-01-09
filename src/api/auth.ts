@@ -24,7 +24,10 @@ export type VerifyEmailCodeReq = { email: string; code: string };
 
 export const authApi = {
   async signup(body: SignupReq) {
-    const { data } = await http.post("/api/auth/signup", body);
+    // 회원가입은 인증 불필요하므로 withCredentials 없이 요청
+    const { data } = await http.post("/api/auth/signup", body, {
+      withCredentials: false
+    });
     return data;
   },
 
