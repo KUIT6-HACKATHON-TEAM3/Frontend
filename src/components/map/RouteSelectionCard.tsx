@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 
 interface Props {
   onBack: () => void;
-  minTime: number; 
-  onSelectRoute: (type: 'MIN' | 'LEISURE', totalTime?: number) => void;
+  minTime: number | null; 
+  onSelectRoute: (addedTime?: number) => void;
 }
 
 export default function RouteSelectionCard({ minTime, onSelectRoute }: Props) {
@@ -43,7 +43,7 @@ export default function RouteSelectionCard({ minTime, onSelectRoute }: Props) {
         
         {/* 옵션 A: 최소길 */}
         <div 
-          onClick={() => onSelectRoute('MIN', minTime)}
+          onClick={() => onSelectRoute(0)}
           className="bg-white rounded-2xl p-6 shadow-sm border border-transparent cursor-pointer active:scale-[0.99] transition-all hover:border-[#B4B998]/50 group"
         >
           <div className="w-10 h-10 bg-[#F4F9F1] rounded-full flex items-center justify-center mb-3 text-[#B4B998] group-hover:bg-[#B4B998] group-hover:text-white transition-colors">
@@ -121,7 +121,7 @@ export default function RouteSelectionCard({ minTime, onSelectRoute }: Props) {
 
           {/* 버튼 영역: 사용자가 시간을 고르고 명확하게 누를 수 있도록 분리 */}
           <button
-            onClick={() => onSelectRoute('LEISURE', minTime + extraTime)}
+            onClick={() => onSelectRoute(extraTime)}
             className="w-full py-3 bg-[#B4B998] text-white font-bold rounded-xl shadow-md hover:bg-[#A3A889] transition-colors flex items-center justify-center"
           >
             이 시간으로 시작하기 <span className="ml-1">→</span>

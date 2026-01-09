@@ -15,7 +15,8 @@ export type AuthRes = {
   status: number;
   message: string;
   data: {
-    refresh_token: string;
+    refreshToken: string;
+    nickname: string;
   }
 };
 
@@ -24,6 +25,7 @@ export type VerifyEmailCodeReq = { email: string; code: string };
 
 export const authApi = {
   async signup(body: SignupReq) {
+
     const { data } = await http.post("/api/auth/signup", body, {
       withCredentials: false
     });
@@ -32,8 +34,10 @@ export const authApi = {
 
   async login(body: LoginReq) {
     const { data } = await http.post<AuthRes>("/api/auth/login", body);
+    console.log("Login response:", data);
+    console.log("Refresh token:", data.data?.refreshToken);
     // accessToken은 쿠키로 자동 저장됨
-    tokenStorage.setRefreshToken(data.data.refresh_token);
+    tokenStorage.setRefreshToken(data.data.refreshToken);
     return data;
   },
 
@@ -49,8 +53,7 @@ export const authApi = {
 
   async reissue(refreshToken: string) {
     const { data } = await http.post<AuthRes>("/api/auth/reissue", { refreshToken });
-    // accessToken은 쿠키로 자동 저장됨
-    tokenStorage.setRefreshToken(data.data.refresh_token);
+    tokenStorage.setRefreshToken(data.data.refreshToken);
     return data;
   },
 

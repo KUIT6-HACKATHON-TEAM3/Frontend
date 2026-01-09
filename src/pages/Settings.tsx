@@ -21,7 +21,7 @@ function ListElement({text}: ListElementProp) {
 
 export default function Settings({nickname, id}: SettingsProp) {
     return (
-        <div className="bg-primary-100 pt-[44px]">
+        <div className="bg-primary-100 pt-[44px] h-screen">
             <div className="h-[56px] flex flex-col jusitify-center items-center w-full">Settings</div>
             <div className="flex flex-col jusitify-center items-center gap-[16px]">
                 <div className="flex flex-col jusitify-center items-center w-[82px] h-[81.5px]">
