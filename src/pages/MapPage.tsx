@@ -525,10 +525,10 @@ useEffect(() => {
                 emotions={[{emoji: "✨", label:"야경맛집"}, {emoji:"👫", label:"데이트코스"}, {emoji: "🌳", label:"나무그늘"}, {emoji:"🐶", label:"댕댕이천국"}]}
                 isFavorite={isFavorite}
                 onAddFavorite={async () => {
-                  if (!localStorage.getItem("refreshToken")) {
-                    if (window.confirm("로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?")) {navigate("/login");}
-                    return;
-                  }
+                  // if (!localStorage.getItem("refreshToken")) {
+                  //   if (window.confirm("로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?")) {navigate("/login");}
+                  //   return;
+                  // }
 
                   if (!cardData.segmentId) return;
 
