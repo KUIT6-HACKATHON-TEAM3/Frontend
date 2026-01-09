@@ -28,7 +28,7 @@ export default function RoadInfoCard({
                     <h3 className='text-sm text-gray-500'>{sectionName} • 1.2km</h3>
                 </div>
 
-                <button className="transition-transform active:scale-95 hover:opacity-80">
+                <button onClick={onLikeClick} className="transition-transform active:scale-95 hover:opacity-80">
                     <img 
                         src={isFavorite ? fullHeart : emptyHeart} 
                         alt="찜하기" 
