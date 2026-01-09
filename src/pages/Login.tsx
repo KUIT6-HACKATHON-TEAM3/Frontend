@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios"; // npm install axios
+import logoImg from "../assets/logo.png"
 
 export default function Login() {
     const navigate = useNavigate();
@@ -22,7 +23,7 @@ export default function Login() {
         try{
             // [API]
             // 로그인 요청
-            const response = await axios.post("http://localhost:8080/api/auth/login", {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
                 email: email,       
                 password: password  
             });
@@ -39,7 +40,7 @@ export default function Login() {
 
                 navigate("/", {replace: true});
             } else{
-                alert("로그인은 됐는데 토큰이 없음. 백엔드 확인 요청");
+                alert("토큰 없음. 백엔드 확인 요청");
             }
 
         } catch (error: any){
@@ -53,8 +54,11 @@ export default function Login() {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-[#F3F4EF] px-6">
         {/* 1. 앱 로고 */}
-        <div className="w-24 h-24 bg-white mb-12 shadow-sm" />
-
+        <img 
+            src={logoImg} 
+            alt="앱 로고" 
+            className="object-contain w-16 mb-10" 
+        />
         {/* 2. 입력 폼 */}
         <div className="w-full max-w-xs space-y-3">
             <input
