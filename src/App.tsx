@@ -1,35 +1,34 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import type { JSX } from 'react';
+import { pointsByRoad  } from "./data/all_roads_walking_paths"
+import MapPage from "./pages/MapPage";
+import Settings from './pages/Settings';
+import Feedback from './pages/Feedback';
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+function PrivateRoute({ children }: { children: JSX.Element }) {
+  // 로컬 스토리지에 토큰이 있는지 확인
+  const token = localStorage.getItem("accessToken");
+  
+  // 토큰 있으면 통과(children), 없으면 로그인 페이지로 이동
+  return token ? children : <Navigate to="/login" replace />;
 }
 
-export default App
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />}/>
+        <Route path="/signup" element={<Signup />}/>
+        <Route path="/settings" element={<Settings nickname='가로수' id='road' />}/>
+        <Route path="/feedback" element={<Feedback />}/>
+        <Route path='/' element={<MapPage appKey={import.meta.env.VITE_KAKAO_JS_KEY } pointsByRoad={pointsByRoad}/>}/>
+
+        <Route path='/map' element={<MapPage appKey={import.meta.env.VITE_KAKAO_JS_KEY } pointsByRoad={pointsByRoad}/>}/>
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;

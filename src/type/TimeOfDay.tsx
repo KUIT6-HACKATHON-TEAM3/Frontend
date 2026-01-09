@@ -1,0 +1,1 @@
+export type TimeOfDay = "DAY" | "SUNSET" | "NIGHT";
