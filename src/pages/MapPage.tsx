@@ -136,30 +136,6 @@ export default function MapPage({
     setIsSearchVisible(true);
   }, []);
 
-  const handleLike = () => {
-    // 로그인 체크 (localStorage에 닉네임이 있는지 확인)
-    const nickname = localStorage.getItem("nickname");
-    
-    if (!nickname) {
-        // 로그인이 안 되어 있다면 confirm 창 띄우고 이동
-        if (window.confirm("로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?")) {
-            navigate("/login");
-        }
-        return;
-    }
-
-    // 2. 로그인 되어 있다면 -> 하트 상태 토글 (UI 반영)
-    if (cardData) {
-        setCardData(prev => prev ? ({
-            ...prev,
-            isFavorite: !prev.isFavorite
-        }) : null);
-
-        // TODO: 여기에 실제 '찜하기/취소' API 호출 코드 추가
-        console.log(`[API 호출] ${!cardData.isFavorite ? '찜하기' : '찜 취소'}`);
-    }
-  };
-
   // ★ 공통 함수: 특정 좌표에 핀 찍고 목적지 카드 띄우기
   // (지도 클릭 시 & 검색 결과 클릭 시 공통 사용)
   const handleSelectLocation = useCallback((coords: any, name: string, address: string) => {
@@ -655,7 +631,7 @@ useEffect(() => {
               <RouteSelectionCard
                 minTime={cardData.estimatedTime}
                 onBack={() => setCardData({ ...cardData, type: 'DESTINATION' })}
-                onSelectRoute={async (type, addedTime) => {
+                onSelectRoute={async (addedTime) => {
                     try {
                       const response = await routesApi.search({
                         user_location: {lat: center.lat, lng: center.lng},
