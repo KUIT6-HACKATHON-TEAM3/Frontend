@@ -75,6 +75,8 @@ export default function MapPage({
   const [isSearchVisible, setIsSearchVisible] = useState(true);
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapLevel, setMapLevel] = useState(level);
+  const [myLocation, setMyLocation] = useState(center);
+  const currentMarkerRef = useRef<any>(null);
 
   // ★ 변경점: 단순히 로드 이름만 저장하는 게 아니라, 카드에 띄울 전체 데이터를 관리
   const [cardData, setCardData] = useState<CardData | null>(null);
@@ -145,6 +147,44 @@ export default function MapPage({
 
   }, []);
 
+  // initMap useEffect 바로 위에 추가하세요
+
+useEffect(() => {
+  // GPS 사용 가능 여부 확인
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const newPos = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+        setMyLocation(newPos); // 상태 업데이트
+
+        // 지도가 이미 로드되어 있다면 중심 이동 & 마커 이동
+        if (mapRef.current && window.kakao) {
+          const moveLatLon = new window.kakao.maps.LatLng(newPos.lat, newPos.lng);
+          
+          // 1. 지도 중심 이동 (부드럽게)
+          mapRef.current.panTo(moveLatLon);
+
+          // 2. 초기 마커(빨간색) 위치도 내 위치로 이동
+          if (currentMarkerRef.current) {
+            currentMarkerRef.current.setPosition(moveLatLon);
+          }
+        }
+      },
+      (err) => {
+        console.error("GPS 정보를 가져오지 못했습니다.", err);
+      },
+      {
+        enableHighAccuracy: true, // 높은 정확도 사용
+        maximumAge: 0, 
+        timeout: 5000 
+      }
+    );
+  }
+}, []);
+
   useEffect(() => {
     if (!appKey || !divRef.current) return;
 
@@ -173,6 +213,8 @@ export default function MapPage({
         image: markerImage
       });
       marker.setMap(map);
+
+      currentMarkerRef.current = marker;
 
       kakao.maps.event.addListener(map, 'zoom_changed', () => {
         setMapLevel(map.getLevel());
