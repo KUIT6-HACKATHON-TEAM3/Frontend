@@ -14,12 +14,8 @@ export default function RoadInfoCard({
     isFavorite,
 }: Props) {
     return (
-        // 디자인 업그레이드 (팀원의 Props 구조는 완벽 유지)
+        // 
         <div className="bg-white rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] p-6 pb-8 w-full">
-            
-            {/* 핸들바 */}
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
-
             {/* 헤더 영역 */}
             <div className="flex flex-row items-start justify-between mb-6">
                 <div className='flex flex-col gap-1'>
