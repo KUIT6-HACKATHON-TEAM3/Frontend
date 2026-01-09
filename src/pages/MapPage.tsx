@@ -103,6 +103,8 @@ export default function MapPage({
   // ★ 변경점: 단순히 로드 이름만 저장하는 게 아니라, 카드에 띄울 전체 데이터를 관리
   const [cardData, setCardData] = useState<CardData | null>(null);
 
+  // 검색어 상태관리
+  const [searchKeyword, setSearchKeyword] = useState("");
   // 검색된 경로 (파란색으로 표시)
   const [searchedPath, setSearchedPath] = useState<LatLng[] | null>(null);
 
@@ -135,7 +137,7 @@ export default function MapPage({
   }, []);
 
   const handleLike = () => {
-    // 1. 로그인 체크 (localStorage에 닉네임이 있는지 확인)
+    // 로그인 체크 (localStorage에 닉네임이 있는지 확인)
     const nickname = localStorage.getItem("nickname");
     
     if (!nickname) {
@@ -157,6 +159,43 @@ export default function MapPage({
         console.log(`[API 호출] ${!cardData.isFavorite ? '찜하기' : '찜 취소'}`);
     }
   };
+
+  // ★ 공통 함수: 특정 좌표에 핀 찍고 목적지 카드 띄우기
+  // (지도 클릭 시 & 검색 결과 클릭 시 공통 사용)
+  const handleSelectLocation = useCallback((coords: any, name: string, address: string) => {
+      if (!mapRef.current || !window.kakao) return;
+      const kakao = window.kakao;
+
+      // 1. 기존 마커 제거
+      if (destinationPinRef.current) {
+          destinationPinRef.current.setMap(null);
+      }
+
+      // 2. 새 마커 생성
+      const imageSrc = destImg;
+      const imageSize = new kakao.maps.Size(36, 42);
+      const imageOption = { offset: new kakao.maps.Point(15, 30) };
+      const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
+
+      const marker = new kakao.maps.Marker({
+          position: coords,
+          image: markerImage
+      });
+
+      marker.setMap(mapRef.current);
+      destinationPinRef.current = marker;
+
+      // 3. 지도 중심 이동
+      mapRef.current.panTo(coords);
+
+      // 4. 카드 데이터 업데이트
+      setCardData({
+          type: 'DESTINATION',
+          title: name || "📍 선택한 위치", // 장소명이 있으면 장소명, 없으면 기본값
+          description: address || "주소 정보 없음"
+      });
+      setIsSearchVisible(true);
+  }, []);
 
   // 2. 지도 빈 곳 클릭 핸들러 (마커 생성 + 주소 변환 + 카드 열기)
   const handleMapClick = useCallback((mouseEvent: any) => {
@@ -205,7 +244,37 @@ export default function MapPage({
       }
     });
 
-  }, []);
+  }, [handleSelectLocation]);
+
+  // ★ 추가: 키워드 검색 실행 함수
+  const searchPlaces = () => {
+    if (!searchKeyword.trim()) {
+      alert("검색어를 입력해주세요!");
+      return;
+    }
+
+    if (!window.kakao || !window.kakao.maps.services) return;
+    const ps = new window.kakao.maps.services.Places();
+
+    ps.keywordSearch(searchKeyword, (data: any, status: any) => {
+      if (status === window.kakao.maps.services.Status.OK) {
+        // 검색 결과 중 첫 번째 장소로 이동
+        const place = data[0];
+        const coords = new window.kakao.maps.LatLng(place.y, place.x);
+        
+        // 장소 선택 처리 (핀 찍고 카드 열기)
+        handleSelectLocation(coords, place.place_name, place.address_name || place.road_address_name);
+        
+        // 키보드 내리기 (모바일 등)
+        (document.activeElement as HTMLElement)?.blur();
+
+      } else if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
+        alert('검색 결과가 존재하지 않습니다.');
+      } else if (status === window.kakao.maps.services.Status.ERROR) {
+        alert('검색 중 오류가 발생했습니다.');
+      }
+    });
+  };
 
 useEffect(() => {
       console.log("Current Location Updated:", myLocation);
@@ -343,6 +412,49 @@ useEffect(() => {
               >☰</button>
               <input type="text" placeholder="어느 길을 걷고 싶으신가요?" className="flex-1 text-sm font-medium text-gray-700 placeholder-gray-400 outline-none" />
               <button className="p-2 text-[#B4B998] hover:bg-gray-50 rounded-full text-xl leading-none">🔍</button>
+            <div 
+              // ★ 수정: 검색바 컨테이너 클릭 시 카드가 있다면 닫기
+                onClick={() => {
+                    if (cardData) {
+                        setCardData(null);
+                        // 필요하다면 마커도 지우기 (선택사항)
+                        // if (destinationPinRef.current) destinationPinRef.current.setMap(null);
+                    }
+                }}
+              className="pointer-events-auto bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-3 flex items-center gap-3">
+              <button className="p-2 text-xl leading-none text-gray-400 rounded-full hover:bg-gray-50">☰</button>
+              <input 
+                type="text" 
+                placeholder="어느 길을 걷고 싶으신가요?" 
+                className="flex-1 text-sm font-medium text-gray-700 placeholder-gray-400 outline-none" 
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                        searchPlaces();
+                    }
+                }}
+              />
+              <button
+                onClick={(e) => {
+                    e.stopPropagation(); // 부모의 onClick(카드닫기)과 겹치지 않게
+                    searchPlaces();
+                }}
+                className="p-2 text-[#B4B998] hover:bg-gray-50 rounded-full text-xl leading-none">
+                  <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  className="w-6 h-6"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </button>
             </div>
           </motion.div>
         )}
