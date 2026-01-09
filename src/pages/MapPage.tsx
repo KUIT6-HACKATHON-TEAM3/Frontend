@@ -186,41 +186,15 @@ export default function MapPage({
     const kakao = window.kakao;
     const latLng = mouseEvent.latLng;
 
-    // 2-1. 마커 찍기
-    if (destinationPinRef.current) {
-      destinationPinRef.current.setMap(null);
-    }
-
-    const imageSrc = destImg;
-    const imageSize = new kakao.maps.Size(36, 42);
-    const imageOption = { offset: new kakao.maps.Point(15, 30) };
-    const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
-
-    const marker = new kakao.maps.Marker({
-      position: latLng,
-      image: markerImage
-    });
-    
-    marker.setMap(mapRef.current);
-    destinationPinRef.current = marker;
-
-    // 2-2. 주소 변환 (Geocoding)
+    // 주소 변환 (Geocoding)
     const geocoder = new kakao.maps.services.Geocoder();
     geocoder.coord2Address(latLng.getLng(), latLng.getLat(), (result: any, status: any) => {
       if (status === kakao.maps.services.Status.OK) {
         const address = result[0].address?.address_name || result[0].road_address?.address_name || "주소 정보 없음";
-        
-        // 2-3. 카드 데이터 업데이트 (카드 열기)
-        setCardData({
-          type: 'DESTINATION',
-          title: "📍 목적지 설정",
-          description: address,
-          estimatedTime: null
-        });
-        setIsSearchVisible(true);
+        // 공통 함수 호출 (이름은 '목적지 설정'으로 고정)
+        handleSelectLocation(latLng, "📍 목적지 설정", address);
       }
     });
-
   }, [handleSelectLocation]);
 
   // ★ 추가: 키워드 검색 실행 함수
@@ -383,13 +357,6 @@ useEffect(() => {
             exit="exit"
             className="absolute z-40 pointer-events-none top-4 left-4 right-4"
           >
-            <div className="pointer-events-auto bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-3 flex items-center gap-3">
-              <button className="p-2 text-xl leading-none text-gray-400 rounded-full hover:bg-gray-50"
-              onClick={() => navigate("/settings")}
-              >☰</button>
-
-              <input type="text" placeholder="어느 길을 걷고 싶으신가요?" className="flex-1 text-sm font-medium text-gray-700 placeholder-gray-400 outline-none" />
-              <button className="p-2 text-[#B4B998] hover:bg-gray-50 rounded-full text-xl leading-none">🔍</button>
             <div 
               // ★ 수정: 검색바 컨테이너 클릭 시 카드가 있다면 닫기
                 onClick={() => {
@@ -433,7 +400,6 @@ useEffect(() => {
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
               </button>
-            </div>
             </div>
           </motion.div>
         )}
