@@ -30,7 +30,7 @@ export default function MapPage({
   const [mapLevel, setMapLevel] = useState(level);
 
   useEffect(() => {
-    if (!divRef.current) return;
+    if (!appKey || !divRef.current) return;
 
     // 1) SDK가 이미 로드되어 있으면 바로 init
     const initMap = () => {
@@ -121,8 +121,38 @@ export default function MapPage({
   }, [selectedRoad]);
 
   return (
-    <div className="relative w-full h-screen">
-      <div ref={divRef} style={{ width: "100%", height: 932 }} />
+    <div className="relative w-full h-screen overflow-hidden bg-gray-100">
+      
+      <div className="absolute z-40 pointer-events-none top-4 left-4 right-4">
+        <div className="pointer-events-auto bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-3 flex items-center gap-3">
+          <button className="p-2 text-xl leading-none text-gray-400 rounded-full hover:bg-gray-50">
+            ☰ {/* Menu 아이콘 대체 */}
+          </button>
+          <input type="text" placeholder="어느 길을 걷고 싶으신가요?" className="flex-1 text-sm font-medium text-gray-700 placeholder-gray-400 outline-none" />
+          <button className="p-2 text-[#B4B998] hover:bg-gray-50 rounded-full text-xl leading-none">
+            🔍 {/* Search 아이콘 대체 */}
+          </button>
+        </div>
+      </div>
+
+      <div ref={divRef} style={{ width: "100%", height: "100%" }} />
+
+      {!appKey && (
+         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-gray-500 bg-gray-200/90">
+            <p className="mb-2 text-xl font-bold">🚫 지도 API 키 없음</p>
+            <p className="mb-6 text-sm">테스트 모드로 UI를 확인합니다.</p>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedRoad(selectedRoad ? null : "능동로 가로수길 1구간");
+              }}
+              className="px-6 py-3 bg-white text-[#B4B998] font-bold rounded-xl shadow-md border border-[#B4B998]"
+            >
+              {selectedRoad ? "카드 닫기" : "👉 하단 카드 열기 테스트"}
+            </button>
+         </div>
+      )}
+
       {isMapReady && mapRef.current &&
         Array.from(pointsByRoad.entries()).map(([roadName, points]) => (
           <RoadPolyline
@@ -135,10 +165,11 @@ export default function MapPage({
           />
         ))
       }
+
       {selectedRoad && (
-        <div ref={cardRef} className="absolute bottom-0 left-0 right-0 bg-white shadow-lg p-0 z-50 rounded-t-3xl overflow-hidden">
+        <div ref={cardRef} className="absolute bottom-0 left-0 right-0 z-50">
           <RoadInfoCard
-            roadName={selectedRoad.split(' ')[0]}
+            roadName="능동로 가로수길" // 실제 데이터 연결 시 수정 필요
             sectionName={selectedRoad}
             isFavorite={false}
           />
