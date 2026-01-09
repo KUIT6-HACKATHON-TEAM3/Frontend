@@ -147,7 +147,9 @@ export default function MapPage({
 
   }, []);
 
-  // initMap useEffect 바로 위에 추가하세요
+useEffect(() => {
+      console.log("Current Location Updated:", myLocation);
+  }, [myLocation]);
 
 useEffect(() => {
   // GPS 사용 가능 여부 확인
