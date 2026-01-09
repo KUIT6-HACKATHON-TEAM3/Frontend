@@ -57,10 +57,9 @@ const useFavoriteRoadsStore = create<FavoriteRoadsStore>((set, get) => ({
 
         set({ error: null });
         try {
-            const result = await favoritesApi.add({
-                segmentId: segmentId,
-                roadName: roadName
-            });
+            const result = await favoritesApi.add(
+                segmentId
+                );
 
             // 낙관적 업데이트: 새로운 즐겨찾기 추가
             const newFavorite: FavoriteRoadDto = {
