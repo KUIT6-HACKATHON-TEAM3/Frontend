@@ -603,7 +603,7 @@ useEffect(() => {
                     try {
                       const response = await routesApi.search({
                         user_location: {lat: center.lat, lng: center.lng},
-                        pin_location: {lat: destinationPinRef.current.lat, lng: destinationPinRef.current.lng},
+                        pin_location: {lat: destinationPinRef.current.getPosition.lat, lng: destinationPinRef.current.getPosition.lng},
                         added_time_req: addedTime
                       });
 
