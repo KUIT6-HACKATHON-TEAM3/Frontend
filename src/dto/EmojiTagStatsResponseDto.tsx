@@ -8,9 +8,9 @@ interface TagInfoDto {
 }
 
 interface RoadDataDto {
-    road_id: number;
-    total_count: number;
-    my_selection: TagCode;
+    roadId: number;
+    totalCount: number;
+    mySelection: TagCode;
     stats: TagInfoDto[];
 }
 

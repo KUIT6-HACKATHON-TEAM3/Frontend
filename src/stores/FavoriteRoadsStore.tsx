@@ -2,10 +2,10 @@ import { create } from "zustand";
 import { favoritesApi } from "../api/favorites";
 
 interface FavoriteRoadDto {
-    favorite_id: number;
-    segment_id: number;
-    road_name: string;
-    created_at: string;
+    favoriteId: number;
+    segmentId: number;
+    roadName: string;
+    createdAt: string;
 }
 
 interface FavoriteRoadsStore {
@@ -34,7 +34,13 @@ const useFavoriteRoadsStore = create<FavoriteRoadsStore>((set, get) => ({
         set({ isLoading: true, error: null });
         try {
             const result = await favoritesApi.list();
-            set({ favorites: result.data, isLoading: false });
+            set({ 
+                favorites: result.data.map((item: Omit<FavoriteRoadDto, 'createdAt'>) => ({
+                    ...item,
+                    createdAt: new Date().toISOString()
+                })), 
+                isLoading: false 
+            });
         } catch (err) {
             set({
                 error: err instanceof Error ? err.message : '즐겨찾기 목록을 불러오는데 실패했습니다',
@@ -52,16 +58,16 @@ const useFavoriteRoadsStore = create<FavoriteRoadsStore>((set, get) => ({
         set({ error: null });
         try {
             const result = await favoritesApi.add({
-                segment_id: segmentId,
-                road_name: roadName
+                segmentId: segmentId,
+                roadName: roadName
             });
 
             // 낙관적 업데이트: 새로운 즐겨찾기 추가
             const newFavorite: FavoriteRoadDto = {
-                favorite_id: result.data.favorite_id,
-                segment_id: segmentId,
-                road_name: roadName,
-                created_at: new Date().toISOString()
+                favoriteId: result.data.favoriteId,
+                segmentId: segmentId,
+                roadName: roadName,
+                createdAt: new Date().toISOString()
             };
 
             set(state => ({
@@ -83,7 +89,7 @@ const useFavoriteRoadsStore = create<FavoriteRoadsStore>((set, get) => ({
 
         // 즉시 UI에서 제거
         set(state => ({
-            favorites: state.favorites.filter(f => f.favorite_id !== favoriteId)
+            favorites: state.favorites.filter(f => f.favoriteId !== favoriteId)
         }));
 
         try {
@@ -107,12 +113,12 @@ const useFavoriteRoadsStore = create<FavoriteRoadsStore>((set, get) => ({
     },
 
     isFavorite: (segmentId: number) => {
-        return get().favorites.some(f => f.segment_id === segmentId);
+        return get().favorites.some(f => f.segmentId === segmentId);
     },
 
     getFavoriteId: (segmentId: number) => {
-        const favorite = get().favorites.find(f => f.segment_id === segmentId);
-        return favorite ? favorite.favorite_id : null;
+        const favorite = get().favorites.find(f => f.segmentId === segmentId);
+        return favorite ? favorite.favoriteId : null;
     },
 
     clearError: () => {

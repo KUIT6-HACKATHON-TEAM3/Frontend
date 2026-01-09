@@ -3,11 +3,11 @@ interface EmotionDto {
     label: string;
 }
 interface RoadInfoDataDto {
-    segment_id: number;
-    road_name: string;
+    segmentId: number;
+    roadName: string;
     emotions: EmotionDto[];
-    total_like_count: number;
-    is_liked: boolean;
+    totalLikeCount: number;
+    isLiked: boolean;
 }
 
 export interface RoadInfoResponseDto {

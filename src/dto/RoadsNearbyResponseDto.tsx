@@ -1,10 +1,10 @@
 import type { LatLng } from "../data/all_roads_walking_paths";
 
 interface RoadInfoDto {
-    segment_id: number;
-    road_name: string;
-    has_trees: boolean;
-    shade_rank: number;
+    segmentId: number;
+    roadName: string;
+    hasTrees: boolean;
+    shadeRank: number;
     coordinates: LatLng[];
 }
 
@@ -15,9 +15,9 @@ export interface RoadsNearbyResponseDto {
 }
 
 export interface RoadsNearbyRequestDto {
-    min_lat: number;
-    min_lng: number;
-    max_lat: number;
-    max_lng: number;
-    zoom_level: number;
+    minLat: number;
+    minLng: number;
+    maxLat: number;
+    maxLng: number;
+    zoomLevel: number;
 }

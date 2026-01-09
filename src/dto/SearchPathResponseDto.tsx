@@ -1,16 +1,16 @@
 import type { LatLng } from "../data/all_roads_walking_paths";
 
 interface FastestPathSummaryDto {
-    actual_time: number;
-    distance_meter: number;
+    actualTime: number;
+    distanceMeter: number;
 }
 
 interface AvenuePathSummaryDto {
-    req_added_time: number;
-    target_total_time: number;
-    actual_time: number;
-    distance_meter: number;
-    display_msg: string;
+    reqAddedTime: number;
+    targetTotalTime: number;
+    actualTime: number;
+    distanceMeter: number;
+    displayMsg: string;
 }
 
 interface FastestPathInfoDto {

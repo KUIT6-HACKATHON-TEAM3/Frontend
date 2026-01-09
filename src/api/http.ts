@@ -4,7 +4,7 @@ import type { InternalAxiosRequestConfig } from "axios";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
 
 type ReissueResponse = {
-  refresh_token: string;
+  refreshToken: string;
 };
 
 const tokenStorage = {
@@ -76,7 +76,7 @@ http.interceptors.response.use(
       isRefreshing = true;
       try {
         const response = await reissueToken();
-        tokenStorage.setRefreshToken(response.refresh_token);
+        tokenStorage.setRefreshToken(response.refreshToken);
 
         onRefreshed("success");
 
