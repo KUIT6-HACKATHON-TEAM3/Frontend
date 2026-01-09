@@ -76,7 +76,8 @@ export default function RoadPolyline({
     });
 
     // 클릭 이벤트 등록
-    kakao.maps.event.addListener(polyline, "click", () => {
+    kakao.maps.event.addListener(polyline, "click", (e: any) => {
+      if (e.domEvent) e.domEvent.stopPropagation();
       onRoadSelectRef.current();
     });
 

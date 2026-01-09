@@ -9,8 +9,8 @@ export default {
       colors: {
         primary: {
           100: "#F4F9F1",
-          500: "#A8E063",
-          900: "#00FF42"
+          500: "#3E6B4F",
+          900: "#B3B3B3"  // transition color
         },
         emphasize: {
           500: "#3E6B4F",
