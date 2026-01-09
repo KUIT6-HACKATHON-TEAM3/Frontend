@@ -582,7 +582,7 @@ useEffect(() => {
                   <button
                     onClick={() => {
                       setCardData(null);
-                      setSearchedPath(null); // 경로 초기화
+                      // setSearchedPath(null); // 경로 초기화
                       if (destinationPinRef.current) destinationPinRef.current.setMap(null);
                     }}
                     className="px-4 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl hover:bg-gray-200"
