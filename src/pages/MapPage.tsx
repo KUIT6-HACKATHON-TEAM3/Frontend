@@ -7,6 +7,7 @@ import type { Variants } from "framer-motion";
 import curlogImg from "@/assets/icons/current-location.svg"
 import destImg from "@/assets/icons/destination.svg"
 import RouteSelectionCard from "../components/map/RouteSelectionCard";
+const ESTIMATED_MIN_TIME = 12; // 예시
 
 declare global {
   interface Window {
@@ -278,7 +279,7 @@ export default function MapPage({
         {cardData && (
           <motion.div
             key="bottom-card" // 이 키가 변하면 안 됨 (그래야 카드가 유지되면서 커짐)
-            layout // ★ 크기/위치 변화 자동 애니메이션
+            layout // 크기/위치 변화 자동 애니메이션
             ref={cardRef}
 
             // 드래그 기능
@@ -306,19 +307,22 @@ export default function MapPage({
               }
             }}
 
+            style={{ 
+                bottom: cardData.type === 'ROUTE_OPTIONS' ? 0 : '-50vh' 
+            }}
+
             className={`absolute bottom-0 left-0 right-0 z-50 pointer-events-auto bg-white 
               shadow-[0_-10px_40px_rgba(0,0,0,0.15)] rounded-t-[32px] overflow-hidden
-              ${cardData.type === 'ROUTE_OPTIONS' ? 'h-[92vh] bottom-0' : 'h-auto -bottom-[50vh] pb-[50vh]'} 
+              ${cardData.type === 'ROUTE_OPTIONS' ? 'h-[92vh]' : 'h-auto pb-[50vh]'} 
             `}
             variants={bottomCardVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
-            // ★ 수정됨: 속도를 늦춰서 애니메이션이 '잘 보이게' 변경
             transition={{ 
                 type: "spring", 
-                damping: 30,    // 반동을 줄이고 부드럽게 (기존 20 -> 25)
-                stiffness: 400,  // 속도를 늦춤 (기존 100 -> 60)
+                damping: 30,    
+                stiffness: 400,  
                 mass: 1 
             }}
           >
@@ -326,7 +330,9 @@ export default function MapPage({
               layout="position"
               className="w-full h-8 flex items-center justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing bg-white z-10 absolute top-0 left-0 right-0 rounded-t-[32px]">
                 <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                <div className={`pt-8 ${cardData.type === 'ROUTE_OPTIONS' ? 'h-full' : 'h-auto'}`}></div>
             </motion.div>
+            <div className={`pt-8 ${cardData.type === 'ROUTE_OPTIONS' ? 'h-full' : 'h-auto'}`}>
             {/* 1. 길 정보 (ROAD) */}
             {cardData.type === 'ROAD' && (
               <motion.div layout="position">
@@ -341,7 +347,6 @@ export default function MapPage({
             {/* 2. 목적지 정보 (DESTINATION) */}
             {cardData.type === 'DESTINATION' && (
               <motion.div layout="position" className="w-full p-6 pb-8">
-                <div className="w-12 h-1.5 bg-white rounded-full mx-auto mb-6" />
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-bold text-gray-800">{cardData.title}</h3>
                   <span className="px-2 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full">도착지</span>
@@ -374,13 +379,16 @@ export default function MapPage({
             {cardData.type === 'ROUTE_OPTIONS' && (
               <motion.div layout="position" className="h-full">
               <RouteSelectionCard
+                minTime={ESTIMATED_MIN_TIME}
                 onBack={() => setCardData({ ...cardData, type: 'DESTINATION' })}
-                onSelectRoute={(type) => {
-                    console.log("선택된 경로:", type);
+                onSelectRoute={(type, totalTime) => {
+                    console.log(`선택된 경로: ${type}, 총 소요 시간: ${totalTime}분`);
+                      // 여기에 실제 경로 탐색 API 호출 로직 추가
                 }}
               />
               </motion.div>
             )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
