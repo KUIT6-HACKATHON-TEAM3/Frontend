@@ -8,6 +8,8 @@ import curlogImg from "@/assets/icons/current-location.svg"
 import destImg from "@/assets/icons/destination.svg"
 import RouteSelectionCard from "../components/map/RouteSelectionCard";
 import { routesApi } from "../api/routes";
+import { useNavigate } from "react-router-dom";
+const ESTIMATED_MIN_TIME = 12; // 예시
 
 declare global {
   interface Window {
@@ -56,6 +58,7 @@ interface CardData {
   type: 'ROAD' | 'DESTINATION' | 'ROUTE_OPTIONS';
   title: string;       // 예: "능동로 가로수길" 또는 "📍 선택한 위치"
   description: string; // 예: "1구간" 또는 "서울 광진구 ..."
+  isFavorite?: boolean;
   estimatedTime: number | null; // 예상 도보 시간 (분)
 }
 
@@ -81,6 +84,7 @@ export default function MapPage({
   level = 3,
   pointsByRoad,
 }: Props) {
+  const navigate = useNavigate();
   const divRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -92,6 +96,8 @@ export default function MapPage({
   const [isSearchVisible, setIsSearchVisible] = useState(true);
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapLevel, setMapLevel] = useState(level);
+  const [myLocation, setMyLocation] = useState(center);
+  const currentMarkerRef = useRef<any>(null);
 
   // ★ 변경점: 단순히 로드 이름만 저장하는 게 아니라, 카드에 띄울 전체 데이터를 관리
   const [cardData, setCardData] = useState<CardData | null>(null);
@@ -100,7 +106,7 @@ export default function MapPage({
   const handleRoadSelect = useCallback((roadName: string) => {
     lastPolylineClickTime.current = Date.now();
     
-    // 선을 누르면 마커는 지워주는 센스 (선택 사항)
+    // 선을 누르면 마커 지우기
     if (destinationPinRef.current) {
       destinationPinRef.current.setMap(null);
       destinationPinRef.current = null;
@@ -111,9 +117,34 @@ export default function MapPage({
       title: "능동로 가로수길", // 대제목
       description: roadName,    // 소제목 (구간 이름)
       estimatedTime: null
+      isFavorite: false
     });
     setIsSearchVisible(true); 
   }, []);
+
+  const handleLike = () => {
+    // 1. 로그인 체크 (localStorage에 닉네임이 있는지 확인)
+    const nickname = localStorage.getItem("nickname");
+    
+    if (!nickname) {
+        // 로그인이 안 되어 있다면 confirm 창 띄우고 이동
+        if (window.confirm("로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?")) {
+            navigate("/login");
+        }
+        return;
+    }
+
+    // 2. 로그인 되어 있다면 -> 하트 상태 토글 (UI 반영)
+    if (cardData) {
+        setCardData(prev => prev ? ({
+            ...prev,
+            isFavorite: !prev.isFavorite
+        }) : null);
+
+        // TODO: 여기에 실제 '찜하기/취소' API 호출 코드 추가
+        console.log(`[API 호출] ${!cardData.isFavorite ? '찜하기' : '찜 취소'}`);
+    }
+  };
 
   // 2. 지도 빈 곳 클릭 핸들러 (마커 생성 + 주소 변환 + 카드 열기)
   const handleMapClick = useCallback((mouseEvent: any) => {
@@ -164,6 +195,46 @@ export default function MapPage({
 
   }, []);
 
+useEffect(() => {
+      console.log("Current Location Updated:", myLocation);
+  }, [myLocation]);
+
+useEffect(() => {
+  // GPS 사용 가능 여부 확인
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const newPos = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+        setMyLocation(newPos); // 상태 업데이트
+
+        // 지도가 이미 로드되어 있다면 중심 이동 & 마커 이동
+        if (mapRef.current && window.kakao) {
+          const moveLatLon = new window.kakao.maps.LatLng(newPos.lat, newPos.lng);
+          
+          // 1. 지도 중심 이동 (부드럽게)
+          mapRef.current.panTo(moveLatLon);
+
+          // 2. 초기 마커(빨간색) 위치도 내 위치로 이동
+          if (currentMarkerRef.current) {
+            currentMarkerRef.current.setPosition(moveLatLon);
+          }
+        }
+      },
+      (err) => {
+        console.error("GPS 정보를 가져오지 못했습니다.", err);
+      },
+      {
+        enableHighAccuracy: true, // 높은 정확도 사용
+        maximumAge: 0, 
+        timeout: 5000 
+      }
+    );
+  }
+}, []);
+
   useEffect(() => {
     if (!appKey || !divRef.current) return;
 
@@ -192,6 +263,8 @@ export default function MapPage({
         image: markerImage
       });
       marker.setMap(map);
+
+      currentMarkerRef.current = marker;
 
       kakao.maps.event.addListener(map, 'zoom_changed', () => {
         setMapLevel(map.getLevel());
@@ -358,7 +431,8 @@ export default function MapPage({
               <RoadInfoCard
                 roadName={cardData.title}
                 sectionName={cardData.description}
-                isFavorite={false}
+                isFavorite={cardData.isFavorite || false}
+                onLikeClick={handleLike}
               />
               </motion.div>
             )}

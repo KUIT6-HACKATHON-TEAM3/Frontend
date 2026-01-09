@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
   onSelectRoute: (type: 'MIN' | 'LEISURE', addedTime?: number) => void;
 }
 
-export default function RouteSelectionCard({ onBack, minTime, onSelectRoute }: Props) {
+export default function RouteSelectionCard({ minTime, onSelectRoute }: Props) {
   // 기본 추가 시간 10분
   const [extraTime, setExtraTime] = useState(10);
   
