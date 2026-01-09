@@ -6,7 +6,7 @@ interface UserLocationDto {
 }
 
 export interface SearchPathRequestDto {
-    user_location: UserLocationDto;
-    pin_location: LatLng;
-    added_time_req?: number;
+    userLocation: UserLocationDto;
+    pinLocation: LatLng;
+    addedTimeReq?: number;
 }

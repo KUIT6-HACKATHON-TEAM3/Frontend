@@ -1,8 +1,8 @@
 interface FavoriteRoadDto {
-    favorite_id: number;
-    segment_id: number;
-    road_name: string;
-    created_at: string;
+    favoriteId: number;
+    segmentId: number;
+    roadName: string;
+    createdAst: string;
 }
 
 export interface MyFavoriteRoadResponseDto {

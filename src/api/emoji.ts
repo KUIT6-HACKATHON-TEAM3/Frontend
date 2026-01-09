@@ -3,8 +3,8 @@ import type { BasicResponseDto } from "../dto/BasicResponseDto";
 import type { TagCode } from "../type/TagCode";
 
 export type EmojiTagReq = {
-    user_id: number;
-    tag_code: TagCode;
+    userId: number;
+    tagCode: TagCode;
 };
 
 export const emojiApi = {

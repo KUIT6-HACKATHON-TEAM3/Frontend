@@ -602,9 +602,9 @@ useEffect(() => {
                 onSelectRoute={async (addedTime) => {
                     try {
                       const response = await routesApi.search({
-                        user_location: {lat: center.lat, lng: center.lng},
-                        pin_location: {lat: destinationPinRef.current.getPosition().getLat(), lng: destinationPinRef.current.getPosition().getLng()},
-                        added_time_req: addedTime
+                        userLocation: {lat: center.lat, lng: center.lng},
+                        pinLocation: {lat: destinationPinRef.current.getPosition().getLat(), lng: destinationPinRef.current.getPosition().getLng()},
+                        addedTimeReq: addedTime
                       });
 
                       console.log('경로 검색 결과:', response);
@@ -620,13 +620,13 @@ useEffect(() => {
                       // 로깅
                       if (addedTime === 0) {
                         console.log('최소길 경로:', response.data.fastest);
-                        console.log('소요시간:', response.data.fastest.summary.actual_time, '분');
-                        console.log('거리:', response.data.fastest.summary.distance_meter, 'm');
+                        console.log('소요시간:', response.data.fastest.summary.actualTime, '분');
+                        console.log('거리:', response.data.fastest.summary.distanceMeter, 'm');
                       } else {
                         console.log('여유길 경로:', response.data.avenue);
-                        console.log('소요시간:', response.data.avenue.summary.actual_time, '분');
-                        console.log('거리:', response.data.avenue.summary.distance_meter, 'm');
-                        console.log('안내 메시지:', response.data.avenue.summary.display_msg);
+                        console.log('소요시간:', response.data.avenue.summary.actualTime, '분');
+                        console.log('거리:', response.data.avenue.summary.distanceMeter, 'm');
+                        console.log('안내 메시지:', response.data.avenue.summary.displayMsg);
                       }
 
                     } catch (error) {
