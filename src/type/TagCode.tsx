@@ -1,0 +1,1 @@
+export type TagCode = "QUIET" | "NIGHT_VIEW" | "TREE" | "WALKABLE" | "DOG" | "DATE" | "PHOTO" | "SOLO"
