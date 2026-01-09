@@ -11,17 +11,11 @@ export default function RouteSelectionCard({ onBack, onSelectRoute }: Props) {
       // 내부 컨텐츠 등장 애니메이션
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.25, duration: 0.4 }}
+      transition={{ delay: 0.1, duration: 0.2 }}
       className="flex flex-col h-full p-6 bg-[#4A4A4A]/5 relative overflow-y-auto"
     >
       {/* 1. 상단 헤더 (뒤로가기) */}
       <div className="flex items-center pt-2 mb-6">
-        <button
-          onClick={onBack}
-          className="p-2 mr-3 text-gray-600 transition-colors bg-white rounded-full shadow-sm hover:bg-gray-50"
-        >
-          ↓
-        </button>
         <h2 className="text-xl font-bold text-gray-700">출발/도착 설정</h2>
       </div>
 

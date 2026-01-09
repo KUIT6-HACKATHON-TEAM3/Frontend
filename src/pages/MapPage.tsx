@@ -280,11 +280,36 @@ export default function MapPage({
             key="bottom-card" // ★ 중요: 이 키가 변하면 안 됩니다! (그래야 카드가 유지되면서 커짐)
             layout // ★ 크기/위치 변화 자동 애니메이션
             ref={cardRef}
+
+            // 드래그 기능
+            drag="y" // Y축 드래그 활성화
+            dragConstraints={{ top: 0, bottom: 0 }} // 드래그 후 제자리로 돌아오려는 탄성(고무줄)
+            dragElastic={0.2} // 당길 때 저항감 (0 ~ 1, 작을수록 뻑뻑함)
+            
+            onDragEnd={(_, info) => {
+              const y = info.offset.y; // 이동한 거리 (음수: 위로, 양수: 아래로)
+              
+              // 1. 위로 100px 이상 당겼고 && 현재 '목적지(작은카드)' 상태라면 -> 전체화면으로
+              if (y < -100 && cardData.type === 'DESTINATION') {
+                 setCardData({ ...cardData, type: 'ROUTE_OPTIONS' });
+              }
+              
+              // 2. 아래로 100px 이상 당겼고 && 현재 '경로선택(큰카드)' 상태라면 -> 원래대로
+              else if (y > 100 && cardData.type === 'ROUTE_OPTIONS') {
+                 setCardData({ ...cardData, type: 'DESTINATION' });
+              }
+              
+              // 3. 아래로 100px 이상 당겼고 && '목적지' 상태라면? -> 아예 닫기 (취소)
+              else if (y > 100 && cardData.type === 'DESTINATION') {
+                 setCardData(null);
+                 if (destinationPinRef.current) destinationPinRef.current.setMap(null);
+              }
+            }}
+
             className={`absolute bottom-0 left-0 right-0 z-50 pointer-events-auto bg-white 
-              ${cardData.type === 'ROUTE_OPTIONS' 
-                ? 'h-screen rounded-none' // 전체 화면
-                : 'rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)]' // 일반 모드
-              }`}
+              shadow-[0_-10px_40px_rgba(0,0,0,0.15)] rounded-t-[32px] overflow-hidden
+              ${cardData.type === 'ROUTE_OPTIONS' ? 'h-[92vh]' : 'h-auto'} 
+            `}
             variants={bottomCardVariants}
             initial="hidden"
             animate="visible"
@@ -297,6 +322,9 @@ export default function MapPage({
                 mass: 0.8 
             }}
           >
+            <div className="w-full h-8 flex items-center justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing bg-white z-10 absolute top-0 left-0 right-0 rounded-t-[32px]">
+                <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+            </div>
             {/* 1. 길 정보 (ROAD) */}
             {cardData.type === 'ROAD' && (
               <RoadInfoCard
@@ -309,7 +337,7 @@ export default function MapPage({
             {/* 2. 목적지 정보 (DESTINATION) */}
             {cardData.type === 'DESTINATION' && (
               <div className="w-full p-6 pb-8">
-                <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
+                <div className="w-12 h-1.5 bg-white rounded-full mx-auto mb-6" />
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-bold text-gray-800">{cardData.title}</h3>
                   <span className="px-2 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full">도착지</span>
