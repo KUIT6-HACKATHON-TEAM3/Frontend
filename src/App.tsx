@@ -5,6 +5,7 @@ import type { JSX } from 'react';
 import { pointsByRoad  } from "./data/all_roads_walking_paths"
 import MapPage from "./pages/MapPage";
 import Settings from './pages/Settings';
+import Feedback from './pages/Feedback';
 
 function PrivateRoute({ children }: { children: JSX.Element }) {
   // 로컬 스토리지에 토큰이 있는지 확인
@@ -21,6 +22,7 @@ function App() {
         <Route path="/login" element={<Login />}/>
         <Route path="/signup" element={<Signup />}/>
         <Route path="/settings" element={<Settings nickname='가로수' id='road' />}/>
+        <Route path="/feedback" element={<Feedback />}/>
         <Route path='/' element={<MapPage appKey={import.meta.env.VITE_KAKAO_JS_KEY } pointsByRoad={pointsByRoad}/>}/>
 
         <Route path='/map' element={<MapPage appKey={import.meta.env.VITE_KAKAO_JS_KEY } pointsByRoad={pointsByRoad}/>}/>
