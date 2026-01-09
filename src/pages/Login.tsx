@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios"; // npm install axios
-import logoImg from "../assets/logo.png"
+import logoImg from "../assets/icons/logo.png"
 
 export default function Login() {
     const navigate = useNavigate();
