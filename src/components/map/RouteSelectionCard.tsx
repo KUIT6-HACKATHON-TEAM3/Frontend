@@ -78,7 +78,7 @@ export default function RouteSelectionCard({ onBack, minTime, onSelectRoute }: P
           <div className="flex items-end gap-1 mb-6">
             <span className="text-sm font-medium text-gray-400">예상 소요시간</span>
             <span className="text-2xl font-bold text-gray-700">
-               {minTime}<span className="text-lg font-medium text-gray-400">min</span> + {extraTime}<span className="text-lg font-medium text-[#B4B998]">min</span>
+               {minTime}<span className="text-lg font-medium text-gray-400">분</span> + {extraTime}<span className="text-lg font-medium text-[#B4B998]">분</span>
             </span>
           </div>
 
