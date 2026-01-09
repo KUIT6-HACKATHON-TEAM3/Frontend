@@ -1,4 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { LatLng } from "../data/all_roads_walking_paths";
+import RoadPolyline from "../components/map/RoadPolyline";
 
 declare global {
   interface Window {
@@ -10,17 +12,21 @@ type Props = {
   appKey: string; // Kakao JavaScript 키
   center?: { lat: number; lng: number };
   level?: number;
+  pointsByRoad: Map<string, LatLng[]>;
 };
 
 export default function MapPage({
   appKey,
   center = { lat: 37.5408, lng: 127.0793 }, // 건국대학교
   level = 3,
+  pointsByRoad,
 }: Props) {
-  const mapRef = useRef<HTMLDivElement | null>(null);
+  const divRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<any>(null);       // kakao.maps.Map
+  const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!divRef.current) return;
 
     // 1) SDK가 이미 로드되어 있으면 바로 init
     const initMap = () => {
@@ -29,13 +35,17 @@ export default function MapPage({
         center: new kakao.maps.LatLng(center.lat, center.lng),
         level,
       };
-      const map = new kakao.maps.Map(mapRef.current, options);
+      const map = new kakao.maps.Map(divRef.current, options);
+      mapRef.current = map;
 
-      // 예시: 마커 하나 찍기
+      // 현재 위치에 마커 찍기
       const marker = new kakao.maps.Marker({
         position: new kakao.maps.LatLng(center.lat, center.lng),
       });
       marker.setMap(map);
+
+      // 지도 준비 완료
+      setIsMapReady(true);
     };
 
     // 2) SDK 스크립트가 없으면 동적으로 삽입
@@ -68,11 +78,29 @@ export default function MapPage({
     script.addEventListener("load", onLoad);
 
     return () => {
+      // 이벤트 리스너만 제거 (메모리 누수 방지)
       script.removeEventListener("load", onLoad);
-      // 보통 SDK script는 전역 재사용하므로 제거하지 않습니다.
-      // (여러 페이지에서 지도 쓰면 다시 로드 비용 발생)
+      // script 태그 자체는 DOM에 유지 (재사용 위해)
     };
   }, [appKey, center.lat, center.lng, level]);
 
-  return <div ref={mapRef} style={{ width: "100%", height: 932 }} />;
+  return (
+    <>
+      <div ref={divRef} style={{ width: "100%", height: 932 }} />
+      {isMapReady && mapRef.current &&
+        Array.from(pointsByRoad.entries()).map(([roadName, points]) => (
+          <RoadPolyline
+            key={roadName}
+            map={mapRef.current}
+            points={points}
+            roadName={roadName}
+            onRoadSelect={() => {
+              console.log(`${roadName} 클릭됨!`);
+              // 여기서 원하는 동작을 추가할 수 있습니다
+            }}
+          />
+        ))
+      }
+    </>
+  );
 }
