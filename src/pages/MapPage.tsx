@@ -7,6 +7,7 @@ import type { Variants } from "framer-motion";
 import curlogImg from "@/assets/icons/current-location.svg"
 import destImg from "@/assets/icons/destination.svg"
 import RouteSelectionCard from "../components/map/RouteSelectionCard";
+import { useNavigate } from "react-router-dom";
 const ESTIMATED_MIN_TIME = 12; // 예시
 
 declare global {
@@ -56,6 +57,7 @@ interface CardData {
   type: 'ROAD' | 'DESTINATION' | 'ROUTE_OPTIONS';
   title: string;       // 예: "능동로 가로수길" 또는 "📍 선택한 위치"
   description: string; // 예: "1구간" 또는 "서울 광진구 ..."
+  isFavorite?: boolean;
 }
 
 export default function MapPage({
@@ -64,6 +66,7 @@ export default function MapPage({
   level = 3,
   pointsByRoad,
 }: Props) {
+  const navigate = useNavigate();
   const divRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -85,7 +88,7 @@ export default function MapPage({
   const handleRoadSelect = useCallback((roadName: string) => {
     lastPolylineClickTime.current = Date.now();
     
-    // 선을 누르면 마커는 지워주는 센스 (선택 사항)
+    // 선을 누르면 마커 지우기
     if (destinationPinRef.current) {
       destinationPinRef.current.setMap(null);
       destinationPinRef.current = null;
@@ -94,10 +97,35 @@ export default function MapPage({
     setCardData({
       type: 'ROAD',
       title: "능동로 가로수길", // 대제목
-      description: roadName    // 소제목 (구간 이름)
+      description: roadName,    // 소제목 (구간 이름)
+      isFavorite: false
     });
     setIsSearchVisible(true); 
   }, []);
+
+  const handleLike = () => {
+    // 1. 로그인 체크 (localStorage에 닉네임이 있는지 확인)
+    const nickname = localStorage.getItem("nickname");
+    
+    if (!nickname) {
+        // 로그인이 안 되어 있다면 confirm 창 띄우고 이동
+        if (window.confirm("로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?")) {
+            navigate("/login");
+        }
+        return;
+    }
+
+    // 2. 로그인 되어 있다면 -> 하트 상태 토글 (UI 반영)
+    if (cardData) {
+        setCardData(prev => prev ? ({
+            ...prev,
+            isFavorite: !prev.isFavorite
+        }) : null);
+
+        // TODO: 여기에 실제 '찜하기/취소' API 호출 코드 추가
+        console.log(`[API 호출] ${!cardData.isFavorite ? '찜하기' : '찜 취소'}`);
+    }
+  };
 
   // 2. 지도 빈 곳 클릭 핸들러 (마커 생성 + 주소 변환 + 카드 열기)
   const handleMapClick = useCallback((mouseEvent: any) => {
@@ -383,7 +411,8 @@ useEffect(() => {
               <RoadInfoCard
                 roadName={cardData.title}
                 sectionName={cardData.description}
-                isFavorite={false}
+                isFavorite={cardData.isFavorite || false}
+                onLikeClick={handleLike}
               />
               </motion.div>
             )}

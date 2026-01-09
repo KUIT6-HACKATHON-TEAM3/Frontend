@@ -3,15 +3,17 @@ import fullHeart from '@/assets/icons/full-heart.svg';
 //import arrowUp from '@/assets/icons/arrow-up.svg'
 
 interface Props {
-    roadName: string,
-    sectionName: string,
-    isFavorite: boolean,
+    roadName: string;
+    sectionName: string;
+    isFavorite: boolean;
+    onLikeClick: () => void;
 }
 
 export default function RoadInfoCard({
     roadName,
     sectionName,
     isFavorite,
+    onLikeClick,
 }: Props) {
     return (
         // 
