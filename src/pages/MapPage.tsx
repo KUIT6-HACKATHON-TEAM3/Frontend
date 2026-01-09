@@ -7,7 +7,7 @@ import type { Variants } from "framer-motion";
 import curlogImg from "@/assets/icons/current-location.svg"
 import destImg from "@/assets/icons/destination.svg"
 import RouteSelectionCard from "../components/map/RouteSelectionCard";
-const ESTIMATED_MIN_TIME = 12; // 예시
+import { routesApi } from "../api/routes";
 
 declare global {
   interface Window {
@@ -56,6 +56,23 @@ interface CardData {
   type: 'ROAD' | 'DESTINATION' | 'ROUTE_OPTIONS';
   title: string;       // 예: "능동로 가로수길" 또는 "📍 선택한 위치"
   description: string; // 예: "1구간" 또는 "서울 광진구 ..."
+  estimatedTime: number | null; // 예상 도보 시간 (분)
+}
+
+// Haversine 공식을 사용한 거리 계산 함수 (미터 단위)
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371e3; // 지구 반지름 (미터)
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // 미터 단위
 }
 
 export default function MapPage({
@@ -92,7 +109,8 @@ export default function MapPage({
     setCardData({
       type: 'ROAD',
       title: "능동로 가로수길", // 대제목
-      description: roadName    // 소제목 (구간 이름)
+      description: roadName,    // 소제목 (구간 이름)
+      estimatedTime: null
     });
     setIsSearchVisible(true); 
   }, []);
@@ -137,7 +155,8 @@ export default function MapPage({
         setCardData({
           type: 'DESTINATION',
           title: "📍 목적지 설정",
-          description: address
+          description: address,
+          estimatedTime: null
         });
         setIsSearchVisible(true);
       }
@@ -162,7 +181,7 @@ export default function MapPage({
       const map = new kakao.maps.Map(divRef.current, options);
       mapRef.current = map;
 
-      // 초기 마커 (빨간색)
+      // 초기 마커 (색)
       const imageSrc = curlogImg;
       const imageSize = new kakao.maps.Size(36, 42);
       const imageOption = { offset: new kakao.maps.Point(15, 30) };
@@ -356,7 +375,22 @@ export default function MapPage({
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
-                        setCardData({ ...cardData, type: 'ROUTE_OPTIONS' });
+                        if (!destinationPinRef.current) return;
+
+                        // 목적지 좌표 가져오기
+                        const destPosition = destinationPinRef.current.getPosition();
+                        const destLat = destPosition.getLat();
+                        const destLng = destPosition.getLng();
+
+                        // Haversine 공식으로 거리 계산 (미터)
+                        const distanceInMeters = Math.round(
+                          calculateDistance(center.lat, center.lng, destLat, destLng)
+                        );
+
+                        // 도보 예상 시간 계산 (카카오맵 기준: 67m/분)
+                        const walkingTimeInMinutes = Math.ceil(distanceInMeters / 67);
+
+                        setCardData({ ...cardData, type: 'ROUTE_OPTIONS', estimatedTime: walkingTimeInMinutes });
                     }}
                     className="flex-1 bg-[#B4B998] text-white py-3 rounded-xl font-bold shadow-md hover:bg-[#A3A889] transition-colors"
                   >
@@ -379,11 +413,14 @@ export default function MapPage({
             {cardData.type === 'ROUTE_OPTIONS' && (
               <motion.div layout="position" className="h-full">
               <RouteSelectionCard
-                minTime={ESTIMATED_MIN_TIME}
+                minTime={cardData.estimatedTime}
                 onBack={() => setCardData({ ...cardData, type: 'DESTINATION' })}
-                onSelectRoute={(type, totalTime) => {
-                    console.log(`선택된 경로: ${type}, 총 소요 시간: ${totalTime}분`);
-                      // 여기에 실제 경로 탐색 API 호출 로직 추가
+                onSelectRoute={(type, addedTime) => {
+                    routesApi.search({
+                      user_location: {lat: center.lat, lng: center.lng},
+                      pin_location: {lat: destinationPinRef.current.lat, lng: destinationPinRef.current.lng},
+                      added_time_req: addedTime
+                    })
                 }}
               />
               </motion.div>
