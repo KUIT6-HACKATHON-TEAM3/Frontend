@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // npm install axios
 import logoImg from "../assets/icons/logo.png"
+import { authApi } from "../api/auth";
+
 
 export default function Login() {
     const navigate = useNavigate();
@@ -23,26 +24,8 @@ export default function Login() {
         try{
             // [API]
             // 로그인 요청
-            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
-                email: email,       
-                password: password  
-            });
-
-            console.log("로그인 응답:", response.data);
-
-            const { accessToken, nickname } = response.data.data;
-
-            if (accessToken) {
-                localStorage.setItem("accessToken", accessToken);
-                localStorage.setItem("nickname", nickname);
-                
-                alert(`${nickname}님 환영합니다!`);
-
-                navigate("/", {replace: true});
-            } else{
-                alert("토큰 없음. 백엔드 확인 요청");
-            }
-
+            await authApi.login({ email, password });
+            navigate("/", {replace: true});
         } catch (error: any){
             console.error("로그인 실패:", error);
             alert("아이디 또는 비밀번호가 일치하지 않습니다.");
@@ -68,7 +51,6 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 bg-white rounded-lg text-sm placeholder-gray-500 outline-none shadow-sm focus:ring-2 focus:ring-[#B4B998]/50 transition-all"            
             />
-
             <input
                 type="password"
                 placeholder="비밀번호"
